@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, flash, redirect, url_for
 import sqlite3
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'super-secret-key'
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -21,19 +22,23 @@ def dashboard():
 def login():
     return render_template('login.html')
 
-@app.route('/register')
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
         displayName = request.form['displayName']
         email = request.form['email']
         password = request.form['password']
-        conformPassword = request.form['confirmPassword']
+        confirmPassword = request.form['confirmPassword']
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        exists = cursor.execute(f"SELECT COUNT(username) FROM Users WHERE username = '{username}'")
+        if password != confirmPassword:
+            flash('Passwords do not match', 'error')
+            return redirect(url_for('register'))
+
+        # exists = cursor.execute(f"SELECT COUNT(username) FROM Users WHERE username = '{username}'")
     return render_template('register.html')
 
 if __name__ == '__main__':
