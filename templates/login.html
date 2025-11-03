@@ -2,6 +2,13 @@
 {% block title %}Login - Smart Study Quiz App{% endblock %}
 {% block heading %}Login{% endblock %}
 {% block content %}
-    <p> enter content here </p>
+        <form method="POST" action="{{ url_for('register') }}">
+            <formtext>email </br>
+            <input type="email" name="email" placeholder="Email" required></formtext>
+            <formtext>password </br>
+            <input type="password" name="confirmPassword" placeholder="Confirm Password" required></formtext> </br>
+            <button type="submit">Login</button>
+
+        </form>
 {% endblock %}
 

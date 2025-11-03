@@ -18,8 +18,14 @@ def index():
 def dashboard():
     return render_template('dashboard.html')
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -36,6 +42,22 @@ def register():
 
         if password != confirmPassword:
             flash('Passwords do not match', 'error')
+            return redirect(url_for('register'))
+        try:
+            cursor.execute(
+                f"INSERT INTO Users (username, hashed_password, email, display_name) VALUES ('{username}', '{password}', '{email}', '{displayName}') "
+            )
+            conn.commit()
+            flash('Registration successful', 'success')
+            conn.close()
+            return redirect(url_for('login'))
+        except sqlite3.IntegrityError:
+            conn.close()
+            flash('Username or email already exists', 'error')
+            return redirect(url_for('register'))
+        except Exception as e:
+            conn.close()
+            flash(f'Error: {str(e)}', 'error')
             return redirect(url_for('register'))
 
         # exists = cursor.execute(f"SELECT COUNT(username) FROM Users WHERE username = '{username}'")
