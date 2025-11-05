@@ -8,13 +8,13 @@ body {
     color:black;
 }
 header {
-    background-color: #5be79d;
+    background-color: #6ceeab;
     color: white;
     padding: 10px 20px;
     text-align: center;
 }
 navbar {
-    background-color: #3cc78d;
+    background-color: #4fdca1;
     padding: 10px;
     width: 100%;
 }
@@ -50,8 +50,8 @@ form {
     margin-left: auto;
     margin-right: auto;
     margin-top: 3em;
-    border-radius: 50px;
-    background: #a0eac9;
+    border-radius: 30px;
+    background: #b5f5d4;
     box-shadow:  20px 20px 60px #88c7ab,
                  -20px -20px 60px #b8ffe7;
     height: 30em;
@@ -66,28 +66,46 @@ formtext {
 }
 
 input {
-    border-radius: 50px;
-    background: #a0eac9;
-    box-shadow: inset 20px 20px 60px #88c7ab,
-                inset -20px -20px 60px #b8ffe7;
+    background: #9ef5cd;
+    box-shadow: inset 2px 5px 10px rgba(0,0,0,0.3);
     border: none;
+    outline: none;
+    border-radius: 10px;
     padding: 0.5em;
-    margin: auto;
+    transition: all 500ms ease;
+    width: 100%;
 }
 
-.glass-card {
-  width: 240px;
-  height: 360px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(21px);
-  -webkit-backdrop-filter: blur(21px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 0 30px 15px rgba(255, 255, 255, 1.5);
-  position: relative;
-  overflow: hidden;
+input:focus {
+    background-color: #a0f5d5;
+    transform: scale(1.05);
+
+}
+
+button {
+    border-radius: 10px;
+    background-color: #ffffff;
+    outline: none;
+    font-family: 'Manrope', sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+    border: 5px #80e5bd solid;
+    box-shadow:  20px 20px 60px #6dc3a1,
+             -20px -20px 60px #93ffd9;
+    transition: all 500ms ease;
+
+}
+
+button:hover {
+    letter-spacing: 3px;
+    background-color: #80e5bd;
+    box-shadow: rgba(0,0,0,0.3) 0px 7px 29px 0px;
+}
+
+button:active {
+    letter-spacing: 3px;
+    background-color: #80e5bd;
+    box-shadow: rgba(0,0,0,0.3) 0px 0px 0px 0px;
+    transform: translateY(10px);
+    transition: 100ms;
 }
