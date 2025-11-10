@@ -12,6 +12,9 @@ def get_db_connection():
 
 @app.route('/add_log', methods=['GET', 'POST'])
 def add_log():
+    if 'user_id' not in session:
+        flash('bro you aint logged in fella', 'error')
+        return redirect(url_for('login'))
     if request.method == 'POST':
         date = request.form['date']
         title = request.form['title']
@@ -40,6 +43,9 @@ def add_log():
 
 @app.route('/dashboard')
 def dashboard():
+    if 'user_id' not in session:
+        flash('bro you aint logged in fella', 'error')
+        return redirect(url_for('login'))
     return render_template('dashboard.html')
 
 @app.route('/')
@@ -105,6 +111,22 @@ def register():
 
         # exists = cursor.execute(f"SELECT COUNT(username) FROM Users WHERE username = '{username}'")
     return render_template('register.html')
+
+@app.route('/view_log', methods=['GET', 'POST'])
+def view_log():
+    if 'user_id' not in session:
+        flash('bro you aint logged in fella', 'error')
+        return redirect(url_for('login'))
+    if request.method == 'GET':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # getting the posts and stuff by checking all posts from a certain user id
+        cursor.execute(f"SELECT * FROM ProgressLogs WHERE user_id = '{session['user_id']}' ORDER BY date DESC")
+        posts = cursor.fetchall()
+        conn.close()
+
+    return render_template('viewLogs.html', posts = posts)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

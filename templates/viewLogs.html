@@ -1,0 +1,24 @@
+{% extends 'base.html' %}   
+{% block title %}View Logs - Smart Study Quiz App{% endblock %}
+{% block heading %}View Logs{% endblock %}
+{% block content %}
+        <p>View your progress</p>
+        {% if posts %}
+            <table>
+                <tr>
+                    <th> Date </th>
+                    <th> Title </th>
+                    <th> Details </th>
+                </tr>
+            {% for post in posts %}
+                <tr>
+                    <td>{{ post.date }}</td>
+                    <td>{{ post.title }}</td>
+                    <td>{{ post.details }}</td>
+                </tr>
+            {% endfor %}
+            </table>
+        {% else %}
+            <p>No progress entries found</p>
+        {% endif %}
+{% endblock %}
