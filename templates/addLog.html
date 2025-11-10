@@ -1,0 +1,17 @@
+{% extends 'base.html' %}   
+{% block title %}Register - Smart Study Quiz App{% endblock %}
+{% block heading %}Register{% endblock %}
+{% block content %}
+        <p>Enter your progress to create a log</p>
+        <form method="POST" action="{{ url_for('add_log') }}">
+            <formtext>Date </br>
+            <input type="date" name="date" required></formtext>
+            <formtext>Title </br>
+            <input type="text" name="title" placeholder="Title" required></formtext>
+            <formtext>Details </br>
+                <input type="text" name="details" placeholder="Details" required></formtext>
+            <button type="submit">Add Progress</button>
+
+        </form>
+
+{% endblock %}

@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, flash, redirect, url_for, session
+from datetime import date
 import sqlite3
 
 app = Flask(__name__)
@@ -9,15 +10,42 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-@app.route('/')
-def index():
-    # return 'Index page'
-    return render_template('index.html')
+@app.route('/add_log', methods=['GET', 'POST'])
+def add_log():
+    if request.method == 'POST':
+        date = request.form['date']
+        title = request.form['title']
+        details = request.form['details']
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(
+                f"INSERT INTO ProgressLogs (user_id, date, title, details) VALUES ('{session['user_id']}', '{date}', '{title}', '{details}')"
+            )
+            conn.commit()
+            flash('Log successfully created!', 'success')
+            return redirect(url_for('dashboard'))
+        except sqlite3.IntegrityError:
+            conn.close()
+            flash('Invalid entry, please enter all fields', 'error')
+            return redirect(url_for('add_log'))
+        except Exception as e:
+            conn.close()
+            flash(f'Error: {str(e)}', 'error')
+            return redirect(url_for('add_log'))
+
+    return render_template('addLog.html')
 
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route('/')
+def index():
+    # return 'Index page'
+    return render_template('index.html')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
