@@ -12,6 +12,11 @@ header {
     color: white;
     padding: 10px 20px;
     text-align: center;
+    border-radius: 0 0 30px 30px;
+    box-shadow:  20px 20px 100px #49a274,
+                 -20px -20px 100px #8fffe2;
+    backdrop-filter: blur(21px);
+    -webkit-backdrop-filter: blur(21px);
 }
 navbar {
     background-color: #4fdca1;
@@ -41,7 +46,6 @@ a {
 }
 
 form {
-    align-items: first;
     align-self: center;
     display: flex;
     flex-direction: column;
@@ -51,9 +55,9 @@ form {
     margin-right: auto;
     margin-top: 3em;
     border-radius: 30px;
-    background: #b5f5d4;
-    box-shadow:  20px 20px 60px #88c7ab,
-                 -20px -20px 60px #b8ffe7;
+    background-color: #6ceeab;
+    box-shadow:  20px 20px 100px #49a274,
+                 -20px -20px 100px #8fffe2;
     height: 30em;
     width: 30em;
     backdrop-filter: blur(21px);
@@ -66,7 +70,7 @@ formtext {
 }
 
 input {
-    background: #9ef5cd;
+    background: #7aecb2;
     box-shadow: inset 2px 5px 10px rgba(0,0,0,0.3);
     border: none;
     outline: none;
@@ -99,13 +103,13 @@ button {
 button:hover {
     letter-spacing: 3px;
     background-color: #80e5bd;
-    box-shadow: rgba(0,0,0,0.3) 0px 7px 29px 0px;
+    box-shadow: rgba(0,0,0,0.3) 0 7px 29px 0;
 }
 
 button:active {
     letter-spacing: 3px;
     background-color: #80e5bd;
-    box-shadow: rgba(0,0,0,0.3) 0px 0px 0px 0px;
+    box-shadow: rgba(0,0,0,0.3) 0 0 0 0;
     transform: translateY(10px);
     transition: 100ms;
 }
