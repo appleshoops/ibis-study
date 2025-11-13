@@ -1,48 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Unbounded:wght@200..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Climate+Crisis&family=Manrope:wght@200..800&family=Unbounded:wght@200..900&display=swap');
 
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: #6ce1a6;
     color:black;
 }
 header {
-    background-color: #6ceeab;
-    color: white;
+    background-color: black;
     padding: 10px 20px;
-    text-align: center;
-    border-radius: 0 0 30px 30px;
-    box-shadow:  20px 20px 100px #49a274,
-                 -20px -20px 100px #8fffe2;
-    backdrop-filter: blur(21px);
-    -webkit-backdrop-filter: blur(21px);
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
 }
-navbar {
-    background-color: #4fdca1;
-    padding: 10px;
-    width: 100%;
-}
-navbar a {
+
+nav a {
     color: white;
     text-decoration: none;
     margin: 0 15px;
+    text-align: right;
+    transition: all ease 500ms;
+    font-family: 'Manrope', sans-serif;
+    padding: 0.5em;
+    border-radius: 7px;
 }
-navbar a:hover {
-    text-decoration: underline;
+
+nav a:active {
+    background-color: #50c78d;
 }
+
+nav a:hover {
+    background-color: #50c78d;
+    color: black;
+}
+
 h1 {
+    text-align: left;
+    font-family: 'Climate Crisis', sans-serif;
+    font-weight: normal;
+    color: white;
+}
+
+h2 {
     text-align: center;
     font-family: 'Unbounded', sans-serif;
-    font-weight: bolder;
-}
-
-p {
-    font-family: 'Manrope', sans-serif;
-}
-
-a {
-    font-family: 'Manrope', sans-serif;
+    font-weight: bold;
+    color: #6ce1a6;
+    font-size: 40px;
 }
 
 form {
@@ -51,65 +56,88 @@ form {
     flex-direction: column;
     gap: 10px;
     padding: 2em;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 3em;
+    margin: 3em auto;
     border-radius: 30px;
-    background-color: #6ceeab;
-    box-shadow:  20px 20px 100px #49a274,
-                 -20px -20px 100px #8fffe2;
-    height: 30em;
+    background-color: white;
+    min-height: 30em;
+    height: auto;
     width: 30em;
-    backdrop-filter: blur(21px);
-    -webkit-backdrop-filter: blur(21px);
+    border: 2px solid #1c1b1b;
+    box-shadow: 10px 10px #1c1b1b;
 }
 
-formtext {
+p {
     font-family: 'Manrope', sans-serif;
-    font-size: 15pt;
+    font-weight: bold;
+    margin: 3px;
 }
 
 input {
-    background: #7aecb2;
-    box-shadow: inset 2px 5px 10px rgba(0,0,0,0.3);
-    border: none;
-    outline: none;
-    border-radius: 10px;
-    padding: 0.5em;
-    transition: all 500ms ease;
-    width: 100%;
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 5px;
+    min-height: 30px;
+    display: block;
+    width: calc(100% - 0.5rem);
+    max-width: 50rem;
+    margin: 0.2rem auto;
+    font-family: 'Manrope', sans-serif;
+    transition: all 100ms ease;
 }
 
 input:focus {
-    background-color: #a0f5d5;
-    transform: scale(1.05);
+    outline: none;
+    box-shadow: 0 0 black;
+    transform: translate(2px, 2px);
+}
 
+
+textarea {
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 5px;
+    min-height: 125px;
+    display: block;
+    width: calc(100% - 0.5rem);
+    max-width: 50rem;
+    resize: vertical;
+    margin: 0.2rem auto;
+    font-family: 'Manrope', sans-serif;
+    transition: all 100ms ease;
+}
+
+textarea:focus {
+    outline: none;
+    box-shadow: 0 0 black;
+    transform: translate(2px, 2px);
 }
 
 button {
-    border-radius: 10px;
-    background-color: #ffffff;
-    outline: none;
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 5px;
+    background-color: white;
     font-family: 'Manrope', sans-serif;
-    font-weight: bold;
-    cursor: pointer;
-    border: 5px #80e5bd solid;
-    box-shadow:  20px 20px 60px #6dc3a1,
-             -20px -20px 60px #93ffd9;
-    transition: all 500ms ease;
-
+    transition:
+        background-color 500ms ease-in-out,
+        font-weight 500ms ease-in-out,
+        letter-spacing 500ms ease-in-out,
+        transform 100ms ease,
+        box-shadow 100ms ease;
+;
+    width: calc(100% - 20rem);
+    max-width: 50rem;
+    margin: 0.2rem auto;
+    height: 3em
 }
 
 button:hover {
-    letter-spacing: 3px;
-    background-color: #80e5bd;
-    box-shadow: rgba(0,0,0,0.3) 0 7px 29px 0;
+    background-color: #50c78d;
+    font-weight: bolder;
+    letter-spacing: 1px;
 }
 
 button:active {
-    letter-spacing: 3px;
-    background-color: #80e5bd;
-    box-shadow: rgba(0,0,0,0.3) 0 0 0 0;
-    transform: translateY(10px);
-    transition: 100ms;
+    box-shadow: 0 0 black;
+    transform: translate(2px, 2px);
 }

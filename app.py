@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, flash, redirect, url_for, session
 from datetime import date
+from werkzeug.security import check_password_hash, generate_password_hash
 import sqlite3
 
 app = Flask(__name__)
@@ -51,7 +52,7 @@ def dashboard():
 @app.route('/')
 def index():
     # return 'Index page'
-    return render_template('index.html')
+    return render_template('dashboard.html')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -62,15 +63,18 @@ def login():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute(
-            f"SELECT * FROM Users WHERE username = '{username}' AND hashed_password = '{password}'"
-        )
+        cursor.execute("SELECT id, username, hashed_password FROM Users WHERE username = ?", (username,))
+
         user = cursor.fetchone()
         conn.close()
 
         if user:
-            session['user_id'] = user['id']
-            flash('Login Successful!', 'success')
+            if check_password_hash(user['hashed_password'] ,password):
+                session['user_id'] = user['id']
+                flash('Login Successful!', 'success')
+            else:
+                flash('Invalid Username Or Password', 'error')
+                return redirect(url_for('login'))
         else:
             flash('Invalid Username Or Password', 'error')
             return redirect(url_for('login'))
@@ -85,6 +89,7 @@ def register():
         email = request.form['email']
         password = request.form['password']
         confirmPassword = request.form['confirmPassword']
+        # hashedPassword = generate_password_hash(password)
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -94,7 +99,7 @@ def register():
             return redirect(url_for('register'))
         try:
             cursor.execute(
-                f"INSERT INTO Users (username, hashed_password, email, display_name) VALUES ('{username}', '{password}', '{email}', '{displayName}') "
+                f"INSERT INTO Users (username, hashed_password, email, display_name) VALUES (?, ?, ?, ?)",  (username, generate_password_hash(password), email, displayName)
             )
             conn.commit()
             flash('Registration successful', 'success')
