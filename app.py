@@ -26,7 +26,7 @@ def add_log():
 
         try:
             cursor.execute(
-                f"INSERT INTO ProgressLogs (user_id, date, title, details) VALUES ('{session['user_id']}', '{date}', '{title}', '{details}')"
+                "INSERT INTO ProgressLogs (user_id, date, title, details) VALUES (?, ?, ?, ?)", ({session['user_id']}, {date}, {title}, {details})
             )
             conn.commit()
             flash('Log successfully created!', 'success')
@@ -81,6 +81,15 @@ def login():
 
     return render_template('login.html')
 
+@app.route('/logout')
+def logout():
+    if 'user_id' not in session:
+        flash('bro you aint logged in fella', 'error')
+    else:
+        session.pop('user_id', None)
+        flash('You have successfully logged out come back soon buddy', 'success')
+    return redirect(url_for('login'))
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -126,7 +135,7 @@ def view_log():
         conn = get_db_connection()
         cursor = conn.cursor()
         # getting the posts and stuff by checking all posts from a certain user id
-        cursor.execute(f"SELECT * FROM ProgressLogs WHERE user_id = '{session['user_id']}' ORDER BY date DESC")
+        cursor.execute("SELECT * FROM ProgressLogs WHERE user_id = ? ORDER BY date DESC"), (session['user_id'],)
         posts = cursor.fetchall()
         conn.close()
 
