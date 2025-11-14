@@ -2,9 +2,32 @@ from flask import Flask, render_template, request, flash, redirect, url_for, ses
 from datetime import date
 from werkzeug.security import check_password_hash, generate_password_hash
 import sqlite3
+from flask_login import login_required, LoginManager, UserMixin, current_user, login_user, logout_user
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret-key'
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = "Please log in to access this page"
+login_manager.login_message_category = 'error'
+
+class User(UserMixin):
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, username FROM Users WHERE id = ?', (user_id,))
+    user = cursor.fetchone()
+    conn.close()
+    if User:
+        return User(id=user['id'], username=user['username'])
+    return None
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -12,6 +35,7 @@ def get_db_connection():
     return conn
 
 @app.route('/add_log', methods=['GET', 'POST'])
+@login_required
 def add_log():
     if 'user_id' not in session:
         flash('bro you aint logged in fella', 'error')
@@ -26,7 +50,7 @@ def add_log():
 
         try:
             cursor.execute(
-                "INSERT INTO ProgressLogs (user_id, date, title, details) VALUES (?, ?, ?, ?)", ({session['user_id']}, {date}, {title}, {details})
+                "INSERT INTO ProgressLogs (user_id, date, title, details) VALUES (?, ?, ?, ?)", (current_user.id, {date}, {title}, {details})
             )
             conn.commit()
             flash('Log successfully created!', 'success')
@@ -40,21 +64,23 @@ def add_log():
             flash(f'Error: {str(e)}', 'error')
             return redirect(url_for('add_log'))
 
-    return render_template('addLog.html')
+    return render_template('addLog.html', username=current_user.username)
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    if 'user_id' not in session:
+    """ if 'user_id' not in session:
         flash('bro you aint logged in fella', 'error')
-        return redirect(url_for('login'))
-    return render_template('dashboard.html')
-
+        return redirect(url_for('login')) """
+    return render_template('dashboard.html', username=current_user.username)
 @app.route('/')
 def index():
     # return 'Index page'
     return render_template('dashboard.html')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -70,8 +96,9 @@ def login():
 
         if user:
             if check_password_hash(user['hashed_password'] ,password):
-                session['user_id'] = user['id']
+                login_user(User(id=user['id'], username=user['username']))
                 flash('Login Successful!', 'success')
+                return redirect(url_for('dashboard'))
             else:
                 flash('Invalid Username Or Password', 'error')
                 return redirect(url_for('login'))
@@ -82,16 +109,17 @@ def login():
     return render_template('login.html')
 
 @app.route('/logout')
+@login_required
 def logout():
-    if 'user_id' not in session:
-        flash('bro you aint logged in fella', 'error')
-    else:
-        session.pop('user_id', None)
-        flash('You have successfully logged out come back soon buddy', 'success')
+    session.pop('user_id', None)
+    logout_user()
+    flash('You have successfully logged out come back soon buddy', 'success')
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
     if request.method == 'POST':
         username = request.form['username']
         displayName = request.form['displayName']
@@ -107,13 +135,18 @@ def register():
             flash('Passwords do not match', 'error')
             return redirect(url_for('register'))
         try:
+            # add the user to the users sql database
             cursor.execute(
                 f"INSERT INTO Users (username, hashed_password, email, display_name) VALUES (?, ?, ?, ?)",  (username, generate_password_hash(password), email, displayName)
             )
             conn.commit()
             flash('Registration successful', 'success')
+            # automatically log the user in
+            cursor.execute("SELECT id, username, hashed_password FROM Users WHERE username = ?", (username,))
+            user = cursor.fetchone()
+            login_user(User(id=user['id'], username=user['username']))
             conn.close()
-            return redirect(url_for('login'))
+            return redirect(url_for('dashboard'))
         except sqlite3.IntegrityError:
             conn.close()
             flash('Username or email already exists', 'error')
@@ -127,19 +160,20 @@ def register():
     return render_template('register.html')
 
 @app.route('/view_log', methods=['GET', 'POST'])
+@login_required
 def view_log():
-    if 'user_id' not in session:
+    """if 'user_id' not in session:
         flash('bro you aint logged in fella', 'error')
-        return redirect(url_for('login'))
+        return redirect(url_for('login'))"""
     if request.method == 'GET':
         conn = get_db_connection()
         cursor = conn.cursor()
         # getting the posts and stuff by checking all posts from a certain user id
-        cursor.execute("SELECT * FROM ProgressLogs WHERE user_id = ? ORDER BY date DESC"), (session['user_id'],)
+        cursor.execute("SELECT date, title, details FROM ProgressLogs WHERE user_id = ? ORDER BY DATE ASC", (current_user.id,))
         posts = cursor.fetchall()
         conn.close()
 
-    return render_template('viewLogs.html', posts = posts)
+    return render_template('viewLogs.html', posts = posts, username=current_user.username)
 
 
 if __name__ == '__main__':
