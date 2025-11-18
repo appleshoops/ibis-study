@@ -3,6 +3,17 @@
 {% block content %}
         <p>View your progress</p>
         {% if posts %}
+            <div class="logGrid">
+                {% for post in posts %}
+                    <div class="log">
+                        <h3>{{ post.title }}</h3>
+                        <h3>{{ post.date }}</h3>
+                        <p>{{ post.details }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Original table format
             <table>
                 <tr>
                     <th> Date </th>
@@ -17,6 +28,7 @@
                 </tr>
             {% endfor %}
             </table>
+            -->
         {% else %}
             <p>No progress entries found</p>
         {% endif %}

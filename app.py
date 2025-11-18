@@ -37,9 +37,11 @@ def get_db_connection():
 @app.route('/add_log', methods=['GET', 'POST'])
 @login_required
 def add_log():
+    """
     if 'user_id' not in session:
         flash('bro you aint logged in fella', 'error')
         return redirect(url_for('login'))
+    """
     if request.method == 'POST':
         date = request.form['date']
         title = request.form['title']
@@ -50,19 +52,17 @@ def add_log():
 
         try:
             cursor.execute(
-                "INSERT INTO ProgressLogs (user_id, date, title, details) VALUES (?, ?, ?, ?)", (current_user.id, {date}, {title}, {details})
+                "INSERT INTO ProgressLogs (user_id, date, title, details) VALUES (?, ?, ?, ?)", (current_user.id, date, title, details)
             )
             conn.commit()
             flash('Log successfully created!', 'success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('view_log'))
         except sqlite3.IntegrityError:
             conn.close()
             flash('Invalid entry, please enter all fields', 'error')
-            return redirect(url_for('add_log'))
         except Exception as e:
             conn.close()
             flash(f'Error: {str(e)}', 'error')
-            return redirect(url_for('add_log'))
 
     return render_template('addLog.html', username=current_user.username)
 
@@ -169,7 +169,7 @@ def view_log():
         conn = get_db_connection()
         cursor = conn.cursor()
         # getting the posts and stuff by checking all posts from a certain user id
-        cursor.execute("SELECT date, title, details FROM ProgressLogs WHERE user_id = ? ORDER BY DATE ASC", (current_user.id,))
+        cursor.execute("SELECT date, title, details FROM ProgressLogs WHERE user_id = ? ORDER BY DATE DESC", (current_user.id,))
         posts = cursor.fetchall()
         conn.close()
 

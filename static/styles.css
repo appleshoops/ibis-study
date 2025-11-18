@@ -50,6 +50,23 @@ h2 {
     font-size: 40px;
 }
 
+h3 {
+    font-family: 'Manrope', sans-serif;
+    font-weight: bolder;
+    color: black;
+    font-size: 25px;
+    margin: 0;
+    padding: 0;
+}
+
+h4 {
+    font-family: 'Manrope', sans-serif;
+    font-weight: bolder;
+    color: black;
+    font-size: 20px;
+    margin: 0
+}
+
 form {
     align-self: center;
     display: flex;
@@ -140,4 +157,27 @@ button:hover {
 button:active {
     box-shadow: 0 0 black;
     transform: translate(2px, 2px);
+}
+
+.logGrid {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.log {
+    align-self: center;
+    justify-content: space-between;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 2em;
+    margin: 2em auto;
+    border-radius: 30px;
+    background-color: white;
+    min-height: 4vh;
+    width: 90vw;
+    border: 2px solid #1c1b1b;
+    box-shadow: 10px 10px #1c1b1b;
 }
