@@ -63,8 +63,9 @@ h4 {
     font-family: 'Manrope', sans-serif;
     font-weight: bolder;
     color: black;
-    font-size: 20px;
-    margin: 0
+    font-size: 30px;
+    align-items: center;
+    text-align: center;
 }
 
 form {

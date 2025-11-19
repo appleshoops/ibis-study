@@ -1,7 +1,12 @@
 {% extends 'base.html' %}   
 {% block title %}View Logs - Smart Study Quiz App{% endblock %}
 {% block content %}
-        <p>View your progress</p>
+        <h4>View your progress</h4> <br>
+        <div style="display: flex; justify-content: center">
+            <a href="{{ url_for('add_log') }}" style="align-content: center">
+                <button style="width: 250px; ">Add Log</button>
+            </a>
+        </div>
         {% if posts %}
             <div class="logGrid">
                 {% for post in posts %}
