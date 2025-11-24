@@ -68,6 +68,16 @@ h4 {
     text-align: center;
 }
 
+ {
+    font-family: 'Manrope', sans-serif;
+    font-weight: bolder;
+    color: black;
+    font-size: 15px;
+    margin: 0;
+    padding: 0;
+}
+
+
 form {
     align-self: center;
     display: flex;
@@ -181,4 +191,78 @@ button:active {
     width: 90vw;
     border: 2px solid #1c1b1b;
     box-shadow: 10px 10px #1c1b1b;
+}
+
+hr {
+    border: 2px solid #6ce1a6;
+    border-radius: 5px;
+    width: 30vw;
+}
+
+.choice {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    margin-bottom: 0.5em;
+}
+
+.choice input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1.6em;
+    height: 1.6em;
+    margin-right: 0.7em;
+    border: 2px solid #1c1b1b;
+    border-radius: 5px;
+    background-color: white;
+    box-shadow: 5px 5px #1c1b1b;
+    cursor: pointer;
+    transition:
+        background-color 500ms ease-in-out,
+        font-weight 500ms ease-in-out,
+        letter-spacing 500ms ease-in-out,
+        transform 100ms ease,
+        box-shadow 100ms ease;
+    display: inline-block;
+    position: relative;
+    vertical-align: middle;
+}
+
+.choice input[type="radio"]:checked {
+    background-color: #50c78d;
+    box-shadow: 2px 2px #1c1b1b;
+    border-width: 2.5px;
+}
+
+.choice input[type="radio"]:hover {
+    background-color: #50c78d;
+    font-weight: bolder;
+    letter-spacing: 1px;
+}
+
+.choice input[type="radio"]:active {
+    box-shadow: 0 0 black;
+    transform: translate(2px, 2px);
+    /* for a pressed button feel */
+}
+
+/* Optional for a more "buttony" look: */
+.choice input[type="radio"]::after {
+    content: '';
+    display: block;
+    width: 0.7em;
+    height: 0.7em;
+    border-radius: 50%;
+    position: absolute;
+    top: 0.39em;
+    left: 0.39em;
+    background: transparent;
+    transition: background 300ms;
+}
+
+.choice input[type="text"] {
+    width: 14vw;
+    margin-left: 0.2em;
+    min-width: 8em;
+    flex: 1;
 }

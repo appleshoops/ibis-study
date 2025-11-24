@@ -1,3 +1,5 @@
+from optparse import Values
+
 from flask import Flask, render_template, request, flash, redirect, url_for, session
 from datetime import date
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -113,12 +115,93 @@ def quiz():
 
     return render_template('quiz.html', username=current_user.username)
 
-@app.route('/quizSelect', methods=['GET'])
+@app.route('/create_question', methods=['GET', 'POST'])
+def createQuestion():
+    quiz_data = None
+    if request.method == 'GET':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT title, numQuestions FROM Quizzes WHERE id = ?", (session['created_quiz_id'],))
+        quiz_data = cursor.fetchone()
+        conn.close()
+
+    if request.method == 'POST':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT numQuestions FROM Quizzes WHERE id = ?", (session['created_quiz_id'],))
+        quiz_data = cursor.fetchone()
+
+        num_questions = quiz_data['numQuestions']
+        for i in range(num_questions):
+            question = request.form.get(f'question_{i}')
+            choices = [request.form.get(f'choice_{i}_{j}') for j in range(4)]
+            correct_index = int(request.form.get(f'correct_{i}'))  # Name: "correct_{i}"
+
+            # Optional: Basic server-side validation
+            if not question or not all(choices):
+                conn.close()
+                flash(f'Please fill out all fields for question {i+1}.', 'error')
+                return redirect(url_for('createQuestion'))
+
+            try:
+                cursor.execute(
+                    "INSERT INTO Questions (quiz_id, question, choice1, choice2, choice3, choice4, correct_index) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (session['created_quiz_id'], question, choices[0], choices[1], choices[2], choices[3], correct_index)
+                )
+            except sqlite3.IntegrityError:
+                conn.close()
+                flash('Invalid entry, please enter all fields', 'error')
+                return redirect(url_for('createQuestion'))
+            except Exception as e:
+                conn.close()
+                flash(f'Error: {str(e)}', 'error')
+                return redirect(url_for('createQuestion'))
+
+        conn.commit()
+        conn.close()
+        flash('Questions successfully created!', 'success')
+        return redirect(url_for('quizSelect'))
+    return render_template('questionCreate.html', quiz=quiz_data)
+
+@app.route('/create_quiz', methods=['GET', 'POST'])
+def createQuiz():
+    if request.method == 'POST':
+        title = request.form['quizName']
+        description = request.form['quizDescription']
+        numQuestions = request.form['quizQuestions']
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(
+                "INSERT INTO Quizzes (title, description, numQuestions) VALUES (?, ?, ?)", (title, description, numQuestions)
+            )
+            quiz_id = cursor.lastrowid
+            conn.commit()
+            session['created_quiz_id'] = quiz_id
+            return redirect(url_for('createQuestion'))
+        except sqlite3.IntegrityError:
+            conn.close()
+            flash('Invalid entry, please enter all fields', 'error')
+        except Exception as e:
+            conn.close()
+            flash(f'Error: {str(e)}', 'error')
+
+    return render_template('quizCreate.html')
+
+@app.route('/select_quiz', methods=['GET', 'POST'])
 def quizSelect():
+    quiz_data = None
+    if request.method == 'GET':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT title, description, numQuestions FROM Quizzes")
+        quiz_data = cursor.fetchall()
+        conn.close()
 
-    return render_template('quizSelect.html', username=current_user.username)
-
-
+    return render_template('quizSelect.html', quizzes=quiz_data)
 
 @app.route('/logout')
 @login_required

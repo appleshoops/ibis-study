@@ -1,10 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}Create Quiz - Smart Study Quiz App{% endblock %}
+{% block content %}
+    <form method="POST" action="{{ url_for('createQuiz') }}">
+        <h2>Create New Quiz</h2>
 
-</body>
-</html>
+    <p>Name <br>
+        <input type="text" name="quizName" placeholder="Quiz Name" required>
+    </p>
+    <p>Description <br>
+        <textarea class="details" name="quizDescription" placeholder="Quiz Description" required></textarea>
+    </p>
+    <p>Amount of Questions <br>
+        <input type="number" name="quizQuestions" placeholder="Amount of Questions" required>
+    </p>
+    <button type="submit">Next</button>
+    </form>
+{% endblock %}

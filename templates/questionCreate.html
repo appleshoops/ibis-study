@@ -1,0 +1,21 @@
+{% extends 'base.html' %}   
+{% block title %}Create Questions - Smart Study Quiz App{% endblock %}
+{% block content %}
+    <form method="POST" action="{{ url_for('createQuestion') }}" style="width: 60vw;">
+        <h2>Create Questions</h2>
+        {% for i in range(quiz.numQuestions) %}
+            <p> Question {{ i + 1 }}
+                <input type="text" name="question_{{ i }}" placeholder="Question" required>
+            </p>
+            <p> Choices: </p>
+            {% for j in range(4) %}
+                <div class="choice">
+                    <input type="radio" name="correct_{{ i }}" value="{{ j }}" required>
+                    <input type="text" name="choice_{{ i }}_{{ j }}" placeholder="Choice {{ j + 1 }}" required style="width: 10vw;">
+                </div>
+            {% endfor %}
+            <hr>
+        {% endfor %}
+        <button type="submit">Save Questions</button>
+    </form>
+{% endblock %}

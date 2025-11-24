@@ -42,5 +42,21 @@ CREATE TABLE IF NOT EXISTS Flashcards(
     front TEXT NOT NULL,
     back TEXT NOT NULL
 );
+/*
+ALTER TABLE Questions
+    ADD choice1 TEXT NOT NULL;
+ALTER TABLE Questions
+    ADD choice2 TEXT NOT NULL;
+ALTER TABLE Questions
+    ADD choice3 TEXT NOT NULL;
+ALTER TABLE Questions
+    ADD choice4 TEXT NOT NULL;
+ALTER TABLE Questions
+    ADD correct_index TEXT NOT NULL;
+
+ALTER TABLE Questions
+    DROP COLUMN answer;
 
 --- sqlite3 database.db ".read schema.sql"
+
+ */

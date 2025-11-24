@@ -1,5 +1,19 @@
 {% extends 'base.html' %}
-{% block title %}Quiz - Smart Study Quiz App{% endblock %}
+{% block title %}Quizzes - Smart Study Quiz App{% endblock %}
 {% block content %}
-    <h4>Quizzes</h4> <br>
+    <h4>Quizzes</h4>
+    <div style="display: flex; justify-content: center">
+        <a href="{{ url_for('createQuiz') }}" style="align-content: center">
+            <button style="width: 250px; ">Create New Quiz</button>
+        </a>
+    </div>
+    <div class="logGrid">
+        {% for quiz in quizzes %}
+            <div class="log">
+                <h3>{{ quiz.title }}</h3>
+                <p>{{ quiz.description }}</p>
+                <p>{{ quiz.numQuestions }} Questions</p>
+            </div>
+        {% endfor %}
+    </div>
 {% endblock %}
