@@ -10,9 +10,18 @@
     <div class="logGrid">
         {% for quiz in quizzes %}
             <div class="log">
-                <h3>{{ quiz.title }}</h3>
-                <p>{{ quiz.description }}</p>
-                <p>{{ quiz.numQuestions }} Questions</p>
+                <div class="quizSelect">
+                    <div>
+                        <h3>{{ quiz.title }}</h3>
+                        <h5 style="margin-top: 0.2em;">{{ quiz.numQuestions }} Questions</h5>
+                        <p style="margin-top: 0.2em; margin-bottom: 0.4em;">{{ quiz.description }}</p>
+                    </div>
+                    <div class="startQuizButton">
+                        <a href="{{ url_for('quiz', quiz_id=quiz.id) }}">
+                            <button style="width: 20vw; height: 10vh">Open Quiz</button>
+                        </a>
+                    </div>
+                </div>
             </div>
         {% endfor %}
     </div>

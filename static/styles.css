@@ -68,11 +68,11 @@ h4 {
     text-align: center;
 }
 
- {
+h5 {
     font-family: 'Manrope', sans-serif;
     font-weight: bolder;
     color: black;
-    font-size: 15px;
+    font-size: 20px;
     margin: 0;
     padding: 0;
 }
@@ -265,4 +265,17 @@ hr {
     margin-left: 0.2em;
     min-width: 8em;
     flex: 1;
+}
+
+.quizSelect {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+    flex: 1;
+}
+
+.startQuizButton {
+    display: flex;
+    flex: 2;
+    justify-content: right;
 }

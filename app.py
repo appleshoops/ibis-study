@@ -112,8 +112,17 @@ def login():
 
 @app.route('/quiz', methods=['GET', 'POST'])
 def quiz():
+    quiz_id = request.args.get('quiz_id', type=int)
+    if not quiz_id:
+        flash('Invalid quiz ID', 'error')
+        return redirect(url_for('quizSelect'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT ")
 
     return render_template('quiz.html', username=current_user.username)
+
 
 @app.route('/create_question', methods=['GET', 'POST'])
 def createQuestion():
@@ -197,7 +206,7 @@ def quizSelect():
     if request.method == 'GET':
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT title, description, numQuestions FROM Quizzes")
+        cursor.execute("SELECT id ,title, description, numQuestions FROM Quizzes")
         quiz_data = cursor.fetchall()
         conn.close()
 

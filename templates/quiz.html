@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Quiz - Smart Study Quiz App{% endblock %}
 {% block content %}
-
+    <form method="POST" action="{{ url_for('quiz') }}">
+        <h2>{{ quiz.quizName }}</h2>
+    </form>
 {% endblock %}
