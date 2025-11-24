@@ -108,6 +108,18 @@ def login():
 
     return render_template('login.html')
 
+@app.route('/quiz', methods=['GET', 'POST'])
+def quiz():
+
+    return render_template('quiz.html', username=current_user.username)
+
+@app.route('/quizSelect', methods=['GET'])
+def quizSelect():
+
+    return render_template('quizSelect.html', username=current_user.username)
+
+
+
 @app.route('/logout')
 @login_required
 def logout():

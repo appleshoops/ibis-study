@@ -17,7 +17,30 @@ CREATE TABLE IF NOT EXISTS ProgressLogs(
     details TEXT NOT NULL,
     image_path TEXT
 
-)
+);
 
+CREATE TABLE IF NOT EXISTS Quizzes(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL
+);
 
---- sqlite3 database.db "read schema.sql"
+CREATE TABLE IF NOT EXISTS Questions(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quiz_id INTEGER NOT NULL,
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS FlashcardSet(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Flashcards(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    set_id INTEGER NOT NULL,
+    front TEXT NOT NULL,
+    back TEXT NOT NULL
+);
+
+--- sqlite3 database.db ".read schema.sql"
