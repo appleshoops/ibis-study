@@ -243,10 +243,8 @@ hr {
 .choice input[type="radio"]:active {
     box-shadow: 0 0 black;
     transform: translate(2px, 2px);
-    /* for a pressed button feel */
 }
 
-/* Optional for a more "buttony" look: */
 .choice input[type="radio"]::after {
     content: '';
     display: block;
@@ -280,3 +278,34 @@ hr {
     justify-content: right;
 }
 
+.answer-box {
+    display: block;
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 5px;
+    min-height: 30px;
+    min-width: 10vw;
+    margin: 0.6em 0;
+    padding: 0.7em 1.2em;
+    font-family: 'Manrope', sans-serif;
+    font-weight: bold;
+    transition: background 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    background: white;
+    align-content: center;
+}
+
+.answer-box:has(input[type="radio"]:checked) {
+    background: #50c78d;
+    box-shadow: 0 0 black;
+    transform: translate(2px, 2px);
+    font-weight: bolder;
+}
+
+
+.answer-box input[type="radio"] {
+    border: none;
+    margin: 0;
+    box-shadow: none;
+    display: none;
+}

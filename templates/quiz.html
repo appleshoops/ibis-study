@@ -9,9 +9,13 @@
             <h5>{{ question.question }}</h5>
             <div class="choice">
                 {% for j in range(4) %}
-                    <input type="radio" name="answer_{{ question }}" value="{{ j }}" required>
+                    <label class="answer-box">
+                        <input type="radio" name="answer_{{ question.id }}" value="{{ j }}" required>
+                        {{ question['choice' ~ (j + 1)] }}
+                    </label>
                 {% endfor %}
             </div>
         {% endfor %}
+        <button type="submit" style="width: 55vw">Submit Quiz</button>
     </form>
 {% endblock %}
