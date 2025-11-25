@@ -119,9 +119,30 @@ def quiz():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT ")
+    cursor.execute("SELECT Quizzes.id AS quiz_id, Quizzes.title AS quiz_title, Quizzes.description AS quiz_description, Questions.* FROM Quizzes JOIN Questions ON Questions.quiz_id = Quizzes.id WHERE Quizzes.id = ?", (quiz_id,))
+    quiz_data = cursor.fetchall()
+    conn.close()
 
-    return render_template('quiz.html', username=current_user.username)
+    if not quiz_data:
+        flash('Quiz has no questions', 'error')
+        return redirect(url_for('quizSelect'))
+    quiz_info = {
+        'quiz_id': quiz_id,
+        'quiz_title': quiz_data[0]['quiz_title'],
+        'quiz_description': quiz_data[0]['quiz_description'],
+    }
+    questions = []
+    for question in quiz_data:
+        questions.append({
+            'id': question['id'],
+            'question': question['question'],
+            'choice1': question['choice1'],
+            'choice2': question['choice2'],
+            'choice3': question['choice3'],
+            'choice4': question['choice4'],
+            'correct_index': int(question['correct_index']) - 1
+        })
+    return render_template('quiz.html', username=current_user.username, quiz=quiz_info, questions=questions)
 
 
 @app.route('/create_question', methods=['GET', 'POST'])

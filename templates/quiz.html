@@ -1,7 +1,17 @@
 {% extends 'base.html' %}
 {% block title %}Quiz - Smart Study Quiz App{% endblock %}
 {% block content %}
-    <form method="POST" action="{{ url_for('quiz') }}">
-        <h2>{{ quiz.quizName }}</h2>
+    <form method="POST" action="{{ url_for('quiz') }}" style="width: 60vw;">
+        <h2>{{ quiz.quiz_title }}</h2>
+        <p style="align-self: center">{{ quiz.quiz_description }}</p>
+
+        {% for question in questions %}
+            <h5>{{ question.question }}</h5>
+            <div class="choice">
+                {% for j in range(4) %}
+                    <input type="radio" name="answer_{{ question }}" value="{{ j }}" required>
+                {% endfor %}
+            </div>
+        {% endfor %}
     </form>
 {% endblock %}
