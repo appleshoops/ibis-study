@@ -16,6 +16,7 @@
 
             {% else %}
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('flashcardSetSelect') }}">Flashcards</a>
                 <a href="{{ url_for('quizSelect') }}">Quizzes</a>
                 <a href="{{ url_for('view_log') }}">Logs</a>
                 <a href="{{ url_for('logout') }}">Logout</a>
@@ -26,7 +27,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <p class="{{ category }}">{{ message }}</p>
+                    <div class="flash-message {{ category }}">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}

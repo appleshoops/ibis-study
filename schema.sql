@@ -43,6 +43,8 @@ CREATE TABLE IF NOT EXISTS Flashcards(
     back TEXT NOT NULL
 );
 
+ALTER TABLE Users
+    ADD COLUMN score INTEGER;
 
 
 /*
@@ -60,8 +62,7 @@ ALTER TABLE Questions
 ALTER TABLE Questions
     DROP COLUMN answer;
 
-ALTER TABLE FlashcardSet
-    ADD COLUMN description TEXT;
+
 
 --- sqlite3 database.db ".read schema.sql"
 

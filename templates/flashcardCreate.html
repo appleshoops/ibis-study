@@ -1,10 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-
-</body>
-</html>
+{% extends 'base.html' %}   
+{% block title %}Create Flashcards - Smart Study Quiz App{% endblock %}
+{% block content %}
+    <form method="POST" action="{{ url_for('flashcardCreate') }}">
+        <h2>Create Flashcards</h2>
+        {% if flashcardSet %}
+            <h3 style="margin-bottom: 2rem; margin-top: 0.7rem;">Set: {{ flashcardSet['title'] }}</h3>
+            {% for i in range(flashcardSet['flashcardNumber']) %}
+                <div class="flashcard-pair" style="margin-bottom: 2.5rem;">
+                    <p style="margin-top: 0.8em; margin-bottom: 0.3em;">Flashcard {{ i + 1 }}</p>
+                    <div style="display: flex; justify-content: center; gap: 2vw; flex-wrap: wrap;">
+                        <input 
+                            type="text"
+                            name="front_{{ i }}"
+                            placeholder="Front (e.g. Term or Question)"
+                            required
+                            style="width: 70%; margin-bottom: 0.5em;"
+                        >
+                    </div>
+                    <div style="display: flex; justify-content: center; gap: 2vw; flex-wrap: wrap;">
+                        <input 
+                            type="text"
+                            name="back_{{ i }}"
+                            placeholder="Back (e.g. Definition or Answer)"
+                            required
+                            style="width: 70%; margin-bottom: 0.5em;"
+                        >
+                    </div>
+                    {% if not loop.last %}
+                        <hr style="margin: 2.5rem auto 0.8rem auto; width: 95%; border-width: 2px; border-radius: 3px;">
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" style="margin-top: 2.8rem; width:80%;">Save Flashcards</button>
+        {% else %}
+            <p>No flashcard set information found.</p>
+        {% endif %}
+    </form>
+{% endblock %}

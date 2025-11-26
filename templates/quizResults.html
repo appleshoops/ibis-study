@@ -44,4 +44,10 @@
             </div>
         {% endfor %}
     </form>
+    <form method="POST" action="{{ url_for('update_score_and_home') }}" style="margin-top: 2em; display: flex; justify-content: center;">
+        <input type="hidden" name="points" value="{{ points }}">
+        <button type="submit" style="width: 60vw; max-width: 400px; min-width: 200px; font-size: 1.1em;">
+            Add Points & Return to Dashboard
+        </button>
+    </form>
 {% endblock %}

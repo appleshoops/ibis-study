@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}SDLC Documentation{% endblock %}
+{% block content %}
+    <style>
+        .sdlc-doc-card {
+            max-width: 820px;
+            margin: 3em auto 2em auto;
+            border-radius: 30px;
+            background: white;
+            border: 2px solid #1c1b1b;
+            box-shadow: 10px 10px #1c1b1b;
+            padding: 2.5em 2.5em 2em 2.5em;
+            font-family: 'Manrope', sans-serif;
+        }
+        .sdlc-doc-card h2 {
+            color: #6ce1a6;
+            font-family: 'Unbounded', sans-serif;
+            text-align: center;
+            margin-bottom: 1.8em;
+        }
+        .sdlc-doc-card .centered-img {
+            display: flex;
+            justify-content: center;
+            align-items: end;
+            margin: 2.5em 0 0 0;
+        }
+        .sdlc-doc-card .centered-img img {
+            max-width: 97%;
+            max-height: 340px;
+            border: 2px solid #1c1b1b;
+            box-shadow: 5px 5px #1c1b1b;
+            border-radius: 17px;
+            background: #fcfcfc;
+        }
+    </style>
+    <div class="sdlc-doc-card">
+        <h2>Software Development Life Cycle (SDLC)</h2>
+
+                <h4>Requirements Definition</h4>
+                <p>
+            The objective of this app is to allow students to enhance their studies by creating flashcards to help memorise things for tests, and to create and use quizzes to help consolidate their knowledge.
+        </p>
+
+        <p>The functional requirements include:</p>
+        <ul>
+            <li>User authentication through SQLite 3 and Werkzeug</li>
+            <li>Database setup with SQLite for Users, Quizzes, and Progress Logs</li>
+            <li>Ability to log progress for development process through a form within the website</li>
+            <li>Basic quiz interface that can display flashcards and multiple choice questions</li>
+            <li>Documentation of the SDLC</li>
+        </ul>
+
+        <p>The non-functional requirements include:</p>
+        <ul>
+            <li>The app must be responsive</li>
+            <li>The app must use Flask for backend routing and Jinja for templating</li>
+            <li>Insecure and secure practices both need to be displayed</li>
+            <li>The code must be version controlled with Git</li>
+            <li>The app should handle basic errors using the Flask flash system</li>
+        </ul>
+
+        <p>The constraints include:</p>
+        <ul>
+            <li>Use only Flask, SQLite 3, and built in Python libraries such as Werkzeug for password hashing</li>
+            <li>Quizzes should be limited to 1 subject in this prototype</li>
+            <li>No PWA features such as voice/ML as they will be added later</li>
+        </ul>
+
+        <p>My acceptance criteria is:</p>
+        <ul>
+            <li>Users can login using username and password within 1 second</li>
+            <li>A user can take a quiz and have it marked within 2 seconds</li>
+            <li>The system prevents users from deleting flashcard sets or quizzes made by other users</li>
+            <li>The system prevents users from creating accounts with emails that have already been used to make an account</li>
+            <li>All features work on the latest versions of all major browsers</li>
+        </ul>
+        <h4>Determining Specifications</h4>
+        <p>The functional outcomes are:</p>
+<ul>
+    <li>
+        The login and register functions take text input from the user and insert them into the SQL table to verify their identity
+    </li>
+    <li>
+        The quiz system allows users to name a quiz and input a number of questions as an integer, then define 4 multiple choice options per question as well as a correct answer
+        <ul>
+            <li>During quizzes, the user can select 1 of 4 boxes per question and once submitted, they will be graded</li>
+        </ul>
+    </li>
+    <li>
+        The flashcard system allows users to name a flashcard set and input the number of flashcards within it, then define a front and back side for each flashcard
+        <ul>
+            <li>When studying the flashcards, the user can click on it to flip it around and view the other side</li>
+        </ul>
+    </li>
+    <li>
+        The progress logs feature allows users to create individual progress logs by providing a date through a calendar picker, a title, and a description through a text area.
+    </li>
+</ul>
+
+<p>The non-functional outcomes are:</p>
+<ul>
+    <li>There will be a navigation bar at the top of the screen to easily move between major pages</li>
+    <li>Related elements will be grouped together with divs</li>
+    <li>The accent colour will be a light green, with a light red to indicate significant actions or errors</li>
+    <li>Major elements will be placed in the center of the screen</li>
+    <li>The wording of the messages will be professional yet friendly</li>
+    <li>The fonts used will be consistent and fit the professional and bold aesthetic of the website</li>
+</ul>
+        <h4>Design</h4>
+        <p>The key aspects are:</p>
+        <ul>
+            <li>Recognising the need to help students with their studying by providing easy access to quiz and flashcard set creation</li>
+            <li>The quiz function will compare the user's input to what the correct answer is defined as in the SQL Questions table and will give points accordingly for each question</li>
+            <li>HTML, CSS, SQL, and Python will be used with Flask and Jinja</li>
+            <li>Future options to make it fun could be adding a leaderboard for points</li>
+            <li>Mockup of quiz function UI below</li>
+        </ul>
+        <p>The rest of the SDLC documentation was done through the progress logs feature</p>
+        
+        <div class="centered-img">
+            <img src="{{ url_for('static', filename='hi.png') }}" alt="SDLC Diagram">
+        </div>
+    </div>
+{% endblock %}

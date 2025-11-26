@@ -41,7 +41,7 @@ def get_db_connection():
 def add_log():
     """
     if 'user_id' not in session:
-        flash('bro you aint logged in fella', 'error')
+        flash('You are not logged in', 'error')
         return redirect(url_for('login'))
     """
     if request.method == 'POST':
@@ -89,9 +89,8 @@ def createQuestion():
         for i in range(num_questions):
             question = request.form.get(f'question_{i}')
             choices = [request.form.get(f'choice_{i}_{j}') for j in range(4)]
-            correct_index = int(request.form.get(f'correct_{i}'))  # Name: "correct_{i}"
+            correct_index = int(request.form.get(f'correct_{i}'))
 
-            # Optional: Basic server-side validation
             if not question or not all(choices):
                 conn.close()
                 flash(f'Please fill out all fields for question {i+1}.', 'error')
@@ -148,10 +147,14 @@ def createQuiz():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    """ if 'user_id' not in session:
-        flash('bro you aint logged in fella', 'error')
-        return redirect(url_for('login')) """
-    return render_template('dashboard.html', username=current_user.username)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT display_name, score FROM Users WHERE id = ?", (current_user.id,))
+    user_data = cursor.fetchone()
+    conn.close()
+    display_name = user_data['display_name'] if user_data and 'display_name' in user_data else current_user.username
+    total_score = user_data['total_score'] if user_data and 'total_score' in user_data else 0
+    return render_template('dashboard.html', display_name=display_name, total_score=total_score)
 
 @app.route('/flashcard_set_select', methods=['GET', 'POST'])
 @login_required
@@ -165,6 +168,118 @@ def flashcardSetSelect():
         conn.close()
     return render_template('flashcardSelect.html', flashcard_sets=flashcard_sets)
 
+@app.route('/flashcard_create', methods=['GET', 'POST'])
+@login_required
+def flashcardCreate():
+    flashcardData = None
+    if request.method == 'GET':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT title, flashcardNumber FROM FlashcardSet WHERE id = ?", (session['created_flashcard_set_id'],))
+        flashcardData = cursor.fetchone()
+        conn.close()
+
+    if request.method == 'POST':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT flashcardNumber FROM FlashcardSet WHERE id = ?", (session['created_flashcard_set_id'],))
+        flashcardData = cursor.fetchone()
+
+        num_questions = flashcardData['flashcardNumber']
+        for i in range(num_questions):
+            front = request.form.get(f'front_{i}')
+            back = request.form.get(f'back_{i}')
+
+            if not front or not back:
+                conn.close()
+                flash(f'Please fill out all fields for question {i+1}.', 'error')
+
+            try:
+                cursor.execute(
+                    "INSERT INTO Flashcards (set_id, front, back) VALUES (?, ?, ?)",
+                    (session['created_flashcard_set_id'], front, back,)
+                )
+            except sqlite3.IntegrityError:
+                conn.close()
+                flash('Invalid entry, please enter all fields', 'error')
+                return redirect(url_for('flashcardCreate'))
+            except Exception as e:
+                conn.close()
+                flash(f'Error: {str(e)}', 'error')
+                return redirect(url_for('flashcardCreate'))
+        conn.commit()  # <-- Make sure to commit here so inserts persist!
+        conn.close()
+        flash('Flashcards successfully created!', 'success')
+        return redirect(url_for('flashcardSetSelect'))
+
+    return render_template('flashcardCreate.html', flashcardSet=flashcardData)
+
+@app.route('/flashcard_set_delete', methods=['POST', 'GET'])
+@login_required
+def flashcardSetDelete():
+    set_id = request.args.get('set_id', type=int)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM FlashcardSet WHERE id = ?", (set_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('flashcardSetSelect'))
+
+
+
+@app.route('/flashcard_set_create', methods=['GET', 'POST'])
+@login_required
+def flashcardSetCreate():
+    if request.method == 'POST':
+        title = request.form['flashcardSetName']
+        description = request.form['flashcardSetDescription']
+        flashcardNumber = request.form['flashcardNumber']
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(
+                "INSERT INTO FlashcardSet (title, description, flashcardNumber, user_id) VALUES (?, ?, ?, ?)", (title, description, flashcardNumber, current_user.id)
+            )
+            flashcard_set_id = cursor.lastrowid
+            conn.commit()
+            session['created_flashcard_set_id'] = flashcard_set_id
+            return redirect(url_for('flashcardCreate'))
+        except sqlite3.IntegrityError:
+            conn.close()
+            flash('Invalid entry, please enter all fields', 'error')
+        except Exception as e:
+            conn.close()
+            flash(f'Error: {str(e)}', 'error')
+
+    return render_template('flashcardSetCreate.html')
+@app.route('/flashcards')
+@login_required
+def flashcards():
+    set_id = request.args.get('set_id', type=int)
+    if not set_id:
+        flash('No flashcard set selected.', 'error')
+        return redirect(url_for('flashcardSetSelect'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Get the set info
+    cursor.execute("SELECT title, description FROM FlashcardSet WHERE id = ?", (set_id,))
+    set_data = cursor.fetchone()
+
+    # Get the flashcards for this set
+    cursor.execute("SELECT front, back FROM Flashcards WHERE set_id = ?", (set_id,))
+    flashcards = cursor.fetchall()
+    conn.close()
+
+    if set_data is None:
+        flash('Flashcard set not found.', 'error')
+        return redirect(url_for('flashcardSetSelect'))
+
+    return render_template('flashcards.html', set_title=set_data['title'], set_description=set_data['description'], flashcards=flashcards)
 @app.route('/')
 def index():
     # return 'Index page'
@@ -309,14 +424,14 @@ def quizSelect():
         quiz_data = cursor.fetchall()
         conn.close()
 
-    return render_template('quizSelect.html', quizzes=quiz_data, user_id=current_user.id)
+    return render_template('quizSelect.html', quizzes=quiz_data, user_id=session.get('user_id'))
 
 @app.route('/logout')
 @login_required
 def logout():
     session.pop('user_id', None)
     logout_user()
-    flash('You have successfully logged out come back soon buddy', 'success')
+    flash('You have successfully logged out, come back soon!', 'success')
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -366,7 +481,7 @@ def register():
 @login_required
 def view_log():
     """if 'user_id' not in session:
-        flash('bro you aint logged in fella', 'error')
+        flash('You are not currently logged in', 'error')
         return redirect(url_for('login'))"""
     if request.method == 'GET':
         conn = get_db_connection()
@@ -378,6 +493,20 @@ def view_log():
 
     return render_template('viewLogs.html', posts = posts, username=current_user.username)
 
+@app.route('/update_score_and_home', methods=['POST'])
+@login_required
+def update_score_and_home():
+    points = request.form.get('points', type=int)
+    if points is not None:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE Users SET score = score + ? WHERE id = ?", (points, current_user.id))
+        conn.commit()
+        conn.close()
+    return redirect(url_for('dashboard'))
 
+@app.route('/sdlc_docs')
+def sdldocs():
+    return render_template('sdlc.html')
 if __name__ == '__main__':
     app.run(debug=True)

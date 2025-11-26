@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Create Flashcard Set - Smart Study Quiz App{% endblock %}
+{% block content %}
+    <form method="POST" action="{{ url_for('flashcardSetCreate') }}">
+        <h2>Create New Flashcard Set</h2>
+
+        <p>Name <br>
+            <input type="text" name="flashcardSetName" placeholder="Name" required>
+        </p>
+        <p>Description <br>
+            <textarea class="details" name="flashcardSetDescription" placeholder="Description" required></textarea>
+        </p>
+        <p>Amount of Flashcards <br>
+            <input type="number" name="flashcardNumber" placeholder="Amount of Flashcards" required>
+        </p>
+        <button type="submit">Next</button>
+    </form>
+{% endblock %}

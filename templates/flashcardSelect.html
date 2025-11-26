@@ -1,10 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-
-</body>
-</html>
+{% extends 'base.html' %}
+{% block title %}Flashcard Sets - Smart Study Quiz App{% endblock %}
+{% block content %}
+    <h4>Flashcard Sets</h4>
+    <div style="display: flex; justify-content: center">
+        <a href="{{ url_for('flashcardSetCreate') }}" style="align-content: center">
+            <button style="width: 250px;">Create New Set</button>
+        </a>
+    </div>
+    <div class="logGrid">
+        {% if flashcard_sets %}
+            {% for set in flashcard_sets %}
+                <div class="log">
+                    <div class="quizSelect">
+                        <div>
+                            <h3>{{ set.title }}</h3>
+                            <h5 style="margin-top: 0.2em;">{{ set.flashcardNumber }} Cards</h5>
+                            <p style="margin-top: 0.2em; margin-bottom: 0.4em;">{{ set.description }}</p>
+                        </div>
+                        <div class="startQuizButton">
+                            <a href="{{ url_for('flashcards', set_id=set.id) }}">
+                                <button style="width: 20vw; height: 10vh">Open Set</button>
+                            </a>
+                            {% if current_user.id == set.user_id %}
+                                <a href="{{ url_for('flashcardSetDelete', set_id=set.id) }}">
+                                    <button style="width: 20vw; height: 5vh" class="redButton">Delete Set</button>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No flashcard sets available.</p>
+        {% endif %}
+    </div>
+{% endblock %}
