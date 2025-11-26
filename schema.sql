@@ -42,6 +42,9 @@ CREATE TABLE IF NOT EXISTS Flashcards(
     front TEXT NOT NULL,
     back TEXT NOT NULL
 );
+
+
+
 /*
 ALTER TABLE Questions
     ADD choice1 TEXT NOT NULL;
@@ -56,6 +59,9 @@ ALTER TABLE Questions
 
 ALTER TABLE Questions
     DROP COLUMN answer;
+
+ALTER TABLE FlashcardSet
+    ADD COLUMN description TEXT;
 
 --- sqlite3 database.db ".read schema.sql"
 

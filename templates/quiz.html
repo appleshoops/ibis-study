@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Quiz - Smart Study Quiz App{% endblock %}
 {% block content %}
-    <form method="POST" action="{{ url_for('quiz') }}" style="width: 60vw;">
+    <form method="POST" action="{{ url_for('quizResults') }}" style="width: 60vw;">
+        <input type="hidden" name="quiz_id" value="{{ quiz.quiz_id }}">
         <h2>{{ quiz.quiz_title }}</h2>
         <p style="align-self: center">{{ quiz.quiz_description }}</p>
 

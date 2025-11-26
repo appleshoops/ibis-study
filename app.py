@@ -67,85 +67,8 @@ def add_log():
             flash(f'Error: {str(e)}', 'error')
 
     return render_template('addLog.html', username=current_user.username)
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    """ if 'user_id' not in session:
-        flash('bro you aint logged in fella', 'error')
-        return redirect(url_for('login')) """
-    return render_template('dashboard.html', username=current_user.username)
-@app.route('/')
-def index():
-    # return 'Index page'
-    return render_template('dashboard.html')
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        # Insecure: Plain-text password comparison
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT id, username, hashed_password FROM Users WHERE username = ?", (username,))
-
-        user = cursor.fetchone()
-        conn.close()
-
-        if user:
-            if check_password_hash(user['hashed_password'] ,password):
-                login_user(User(id=user['id'], username=user['username']))
-                flash('Login Successful!', 'success')
-                return redirect(url_for('dashboard'))
-            else:
-                flash('Invalid Username Or Password', 'error')
-                return redirect(url_for('login'))
-        else:
-            flash('Invalid Username Or Password', 'error')
-            return redirect(url_for('login'))
-
-    return render_template('login.html')
-
-@app.route('/quiz', methods=['GET', 'POST'])
-def quiz():
-    quiz_id = request.args.get('quiz_id', type=int)
-    if not quiz_id:
-        flash('Invalid quiz ID', 'error')
-        return redirect(url_for('quizSelect'))
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT Quizzes.id AS quiz_id, Quizzes.title AS quiz_title, Quizzes.description AS quiz_description, Questions.* FROM Quizzes JOIN Questions ON Questions.quiz_id = Quizzes.id WHERE Quizzes.id = ?", (quiz_id,))
-    quiz_data = cursor.fetchall()
-    conn.close()
-
-    if not quiz_data:
-        flash('Quiz has no questions', 'error')
-        return redirect(url_for('quizSelect'))
-    quiz_info = {
-        'quiz_id': quiz_id,
-        'quiz_title': quiz_data[0]['quiz_title'],
-        'quiz_description': quiz_data[0]['quiz_description'],
-    }
-    questions = []
-    for question in quiz_data:
-        questions.append({
-            'id': question['id'],
-            'question': question['question'],
-            'choice1': question['choice1'],
-            'choice2': question['choice2'],
-            'choice3': question['choice3'],
-            'choice4': question['choice4'],
-            'correct_index': int(question['correct_index']) - 1
-        })
-    return render_template('quiz.html', username=current_user.username, quiz=quiz_info, questions=questions)
-
-
 @app.route('/create_question', methods=['GET', 'POST'])
+@login_required
 def createQuestion():
     quiz_data = None
     if request.method == 'GET':
@@ -195,6 +118,7 @@ def createQuestion():
     return render_template('questionCreate.html', quiz=quiz_data)
 
 @app.route('/create_quiz', methods=['GET', 'POST'])
+@login_required
 def createQuiz():
     if request.method == 'POST':
         title = request.form['quizName']
@@ -206,7 +130,7 @@ def createQuiz():
 
         try:
             cursor.execute(
-                "INSERT INTO Quizzes (title, description, numQuestions) VALUES (?, ?, ?)", (title, description, numQuestions)
+                "INSERT INTO Quizzes (title, description, numQuestions, user_id) VALUES (?, ?, ?, ?)", (title, description, numQuestions, current_user.id)
             )
             quiz_id = cursor.lastrowid
             conn.commit()
@@ -221,17 +145,171 @@ def createQuiz():
 
     return render_template('quizCreate.html')
 
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    """ if 'user_id' not in session:
+        flash('bro you aint logged in fella', 'error')
+        return redirect(url_for('login')) """
+    return render_template('dashboard.html', username=current_user.username)
+
+@app.route('/flashcard_set_select', methods=['GET', 'POST'])
+@login_required
+def flashcardSetSelect():
+    flashcard_sets = None
+    if request.method == 'GET':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM FlashcardSet")
+        flashcard_sets = cursor.fetchall()
+        conn.close()
+    return render_template('flashcardSelect.html', flashcard_sets=flashcard_sets)
+
+@app.route('/')
+def index():
+    # return 'Index page'
+    return render_template('dashboard.html')
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Insecure: Plain-text password comparison
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT id, username, hashed_password FROM Users WHERE username = ?", (username,))
+
+        user = cursor.fetchone()
+        conn.close()
+
+        if user:
+            if check_password_hash(user['hashed_password'] ,password):
+                login_user(User(id=user['id'], username=user['username']))
+                flash('Login Successful!', 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid Username Or Password', 'error')
+                return redirect(url_for('login'))
+        else:
+            flash('Invalid Username Or Password', 'error')
+            return redirect(url_for('login'))
+
+    return render_template('login.html')
+
+@app.route('/quiz', methods=['GET', 'POST'])
+@login_required
+def quiz():
+    if request.method == 'GET':
+        quiz_id = request.args.get('quiz_id', type=int)
+        if not quiz_id:
+            flash('Invalid quiz ID', 'error')
+            return redirect(url_for('quizSelect'))
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT Quizzes.id AS quiz_id, Quizzes.title AS quiz_title, Quizzes.description AS quiz_description, Questions.* FROM Quizzes JOIN Questions ON Questions.quiz_id = Quizzes.id WHERE Quizzes.id = ?", (quiz_id,))
+        quiz_data = cursor.fetchall()
+        conn.close()
+
+        if not quiz_data:
+            flash('Quiz has no questions', 'error')
+            return redirect(url_for('quizSelect'))
+        quiz_info = {
+            'quiz_id': quiz_id,
+            'quiz_title': quiz_data[0]['quiz_title'],
+            'quiz_description': quiz_data[0]['quiz_description'],
+        }
+        questions = []
+        for question in quiz_data:
+            questions.append({
+                'id': question['id'],
+                'question': question['question'],
+                'choice1': question['choice1'],
+                'choice2': question['choice2'],
+                'choice3': question['choice3'],
+                'choice4': question['choice4'],
+                'correct_index': int(question['correct_index']) - 1
+            })
+
+    return render_template('quiz.html', username=current_user.username, quiz=quiz_info, questions=questions)
+
+@app.route('/quiz_delete', methods=['POST', 'GET'])
+@login_required
+def quizDelete():
+    quiz_id = request.args.get('quiz_id', type=int)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM Quizzes WHERE id = ?", (quiz_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('quizSelect'))
+@app.route('/quiz_results', methods=['POST'])
+@login_required
+def quizResults():
+    quiz_id = request.form.get('quiz_id', type=int)
+    if not quiz_id:
+        flash('No quiz selected', 'error')
+        return redirect(url_for('quizSelect'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM Questions WHERE quiz_id = ?", (quiz_id,))
+    questions = cursor.fetchall()
+    conn.close()
+
+    results = []
+    num_correct = 0
+
+    for question in questions:
+        question_id = question['id']
+        correct_index = int(question['correct_index'])
+        user_answer = request.form.get(f'answer_{question_id}')
+        user_answer_index = int(user_answer) if user_answer is not None else None
+
+        is_correct = (user_answer_index == correct_index)
+        if is_correct:
+            num_correct += 1
+
+        results.append({
+            'question': question['question'],
+            'choice1': question['choice1'],
+            'choice2': question['choice2'],
+            'choice3': question['choice3'],
+            'choice4': question['choice4'],
+            'user_answer': user_answer_index,
+            'correct_index': correct_index,
+            'is_correct': is_correct,
+        })
+
+    total_questions = len(questions)
+    score = f"{num_correct}/{total_questions}" if total_questions > 0 else "0/0"
+    points = int(total_questions * 10)
+
+    return render_template(
+        'quizResults.html',
+        username=getattr(current_user, "username", None),
+        results=results,
+        score=score,
+        points=points,
+        quiz_id=quiz_id
+    )
+
 @app.route('/select_quiz', methods=['GET', 'POST'])
+@login_required
 def quizSelect():
     quiz_data = None
     if request.method == 'GET':
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT id ,title, description, numQuestions FROM Quizzes")
+        cursor.execute("SELECT * FROM Quizzes")
         quiz_data = cursor.fetchall()
         conn.close()
 
-    return render_template('quizSelect.html', quizzes=quiz_data)
+    return render_template('quizSelect.html', quizzes=quiz_data, user_id=current_user.id)
 
 @app.route('/logout')
 @login_required

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Quiz Results{% endblock %}
+{% block content %}
+    <form style="width: 60vw;">
+        <h2>Quiz Results</h2>
+        <h3 style="align-self: center">Score: {{ score }}</h3>
+        <h3 style="align-self: center">Points: {{ points }}</h3>
+
+        {% for result in results %}
+            <h5>
+                {{ result.question }}
+                {% if result.is_correct %}
+                    <span class="correct">– Correct</span>
+                {% else %}
+                    <span class="incorrect">– Incorrect</span>
+                {% endif %}
+            </h5>
+            <div class="choice">
+                {% for j in range(4) %}
+                    {# Determine box style for each option #}
+                    {% if result.user_answer == j and result.user_answer == result.correct_index %}
+                        {% set style = "background-color: #50c78d;" %}
+                    {% elif result.user_answer == j %}
+                        {% set style = "background-color: #f85555;" %}
+                    {% elif result.user_answer != j and result.correct_index == j %}
+                        {% set style = "background-color: #bdfad1;" %}
+                    {% else %}
+                        {% set style = "" %}
+                    {% endif %}
+
+                    <label class="answer-box" style="{{ style }}">
+                        <input type="radio" name="answer_{{ result.id if result.id is defined else loop.index0 }}" value="{{ j }}" disabled
+                            {% if result.user_answer == j %}checked{% endif %}>
+                        {{ result['choice' ~ (j + 1)] }}
+                        {% if result.user_answer == j and result.user_answer == result.correct_index %}
+                            <span style="color:green;">&larr; Your Correct Answer</span>
+                        {% elif result.user_answer == j %}
+                            <span style="color:#000000;">&larr; Your Answer</span>
+                        {% elif result.correct_index == j %}
+                            <span style="color:green;">&larr; Correct Answer</span>
+                        {% endif %}
+                    </label>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </form>
+{% endblock %}

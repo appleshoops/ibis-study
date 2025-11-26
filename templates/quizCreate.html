@@ -4,15 +4,15 @@
     <form method="POST" action="{{ url_for('createQuiz') }}">
         <h2>Create New Quiz</h2>
 
-    <p>Name <br>
-        <input type="text" name="quizName" placeholder="Quiz Name" required>
-    </p>
-    <p>Description <br>
-        <textarea class="details" name="quizDescription" placeholder="Quiz Description" required></textarea>
-    </p>
-    <p>Amount of Questions <br>
-        <input type="number" name="quizQuestions" placeholder="Amount of Questions" required>
-    </p>
-    <button type="submit">Next</button>
+        <p>Name <br>
+            <input type="text" name="quizName" placeholder="Quiz Name" required>
+        </p>
+        <p>Description <br>
+            <textarea class="details" name="quizDescription" placeholder="Quiz Description" required></textarea>
+        </p>
+        <p>Amount of Questions <br>
+            <input type="number" name="quizQuestions" placeholder="Amount of Questions" required>
+        </p>
+        <button type="submit">Next</button>
     </form>
 {% endblock %}
