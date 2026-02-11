@@ -1,13 +1,17 @@
-from optparse import Values
-
-from flask import Flask, render_template, request, flash, redirect, url_for, session
-from datetime import date
-from werkzeug.security import check_password_hash, generate_password_hash
 import sqlite3
+
+import bleach
+from email_validator import validate_email, EmailNotValidError
+from flask import Flask, render_template, request, flash, redirect, url_for, session
 from flask_login import login_required, LoginManager, UserMixin, current_user, login_user, logout_user
+from werkzeug.security import check_password_hash, generate_password_hash
+from zxcvbn import zxcvbn
+from dotenv import load_dotenv
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'super-secret-key'
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    raise ValueError("No FLASK_SECRET_KEY set in environment or .env file!")
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -19,6 +23,53 @@ class User(UserMixin):
     def __init__(self, id, username):
         self.id = id
         self.username = username
+
+def clean_input(s: str, allow_html: bool = False) -> str:
+    s = s.strip()
+    if allow_html:
+        return bleach.clean(
+            s,
+            tags=['p', 'br', 'strong', 'en'],
+            attributes={},
+            strip=True
+        )
+    else:
+        return bleach.clean(s, tags=[], strip=True)
+
+def clean_log_title(s: str, allow_html: bool = False) -> str:
+    # strip all dangerous content
+    s = s.strip()
+    # remove all HTML
+    cleaned = bleach.clean(s, tags=[], strip=True)
+    return cleaned[:100]
+
+def clean_log_details(s: str) -> str:
+    s = s.strip()
+    return bleach.clean(
+        s,
+        tags=['p', 'br', 'strong', 'en', 'ul', 'ol', 'li', 'u'],
+        attributes={},
+        strip=True
+    )
+
+# check email validity instead of native HTML checking
+def validate_email_strict(email: str) -> tuple[bool, str]:
+    try:
+        validate_email(email, check_deliverability=False)
+        return True, ""
+    except EmailNotValidError as e:
+        return False, str(e)
+
+def validate_password_strength(password: str) -> tuple[bool, str]:
+    if len(password) < 10:
+        return False, "Password must be at least 10 characters long"
+
+    result = zxcvbn(password)
+    if result['score'] < 3:
+        warning = result['feedback']['warning'] or "Password is too weak"
+        suggestions = " ".join(result['feedback']['suggestions'])
+        return False, f"{warning} {suggestions}".strip()
+    return True, "Strong password"
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -46,8 +97,11 @@ def add_log():
     """
     if request.method == 'POST':
         date = request.form['date']
-        title = request.form['title']
-        details = request.form['details']
+        rawtitle = request.form['title']
+        rawdetails = request.form['details']
+
+        title = clean_log_title(rawtitle)
+        details =clean_log_details(rawdetails)
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -439,9 +493,18 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     if request.method == 'POST':
-        username = request.form['username']
-        displayName = request.form['displayName']
-        email = request.form['email']
+        # remove trailing whitespaces
+        raw_username = request.form.get('username').strip()
+        raw_displayName = request.form.get('displayName').strip()
+        raw_email = request.form.get('email').strip()
+
+        username = clean_input(raw_username)
+        displayName = clean_input(raw_displayName)
+        email = clean_input(raw_email)
+
+        # username = request.form['username']
+        # displayName = request.form['displayName']
+        # email = request.form['email']
         password = request.form['password']
         confirmPassword = request.form['confirmPassword']
         # hashedPassword = generate_password_hash(password)
@@ -452,8 +515,19 @@ def register():
         if password != confirmPassword:
             flash('Passwords do not match', 'error')
             return redirect(url_for('register'))
+
+        pw_valid, pw_msg = validate_password_strength(password)
+        if not pw_valid:
+            flash(pw_msg, 'error')
+            return redirect(url_for('register'))
+
+        email_valid, email_msg = validate_email_strict(email)
+        if not email_valid:
+            flash(email_msg, 'error')
+            return redirect(url_for('register'))
+
         try:
-            # add the user to the users sql database
+            # add the user to the users SQL database
             cursor.execute(
                 f"INSERT INTO Users (username, hashed_password, email, display_name) VALUES (?, ?, ?, ?)",  (username, generate_password_hash(password), email, displayName)
             )
