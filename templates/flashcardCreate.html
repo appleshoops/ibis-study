@@ -2,6 +2,7 @@
 {% block title %}Create Flashcards - Smart Study Quiz App{% endblock %}
 {% block content %}
     <form method="POST" action="{{ url_for('flashcardCreate') }}">
+        {{ form.csrf_token }}
         <h2>Create Flashcards</h2>
         {% if flashcardSet %}
             <h3 style="margin-bottom: 2rem; margin-top: 0.7rem;">Set: {{ flashcardSet['title'] }}</h3>

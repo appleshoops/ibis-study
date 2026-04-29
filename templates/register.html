@@ -2,6 +2,7 @@
 {% block title %}Register - Smart Study Quiz App{% endblock %}
 {% block content %}
         <form method="POST" action="{{ url_for('register') }}">
+            {{ form.csrf_token }}
             <h2>Register</h2>
             <p>username
             <input type="text" name="username" placeholder="Username" required></p>

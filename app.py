@@ -1,17 +1,26 @@
-import sqlite3
-
-import bleach
-from email_validator import validate_email, EmailNotValidError
-from flask import Flask, render_template, request, flash, redirect, url_for, session
-from flask_login import login_required, LoginManager, UserMixin, current_user, login_user, logout_user
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import check_password_hash, generate_password_hash
-from zxcvbn import zxcvbn
+from flask_login import login_required, LoginManager, UserMixin, current_user, login_user, logout_user
+import sqlite3
+import logging  # library for logging security events
+import bleach  # library for sanitisation of data
+from email_validator import validate_email, EmailNotValidError
+from zxcvbn import zxcvbn  # password rules
+from forms import RegistrationForm, LoginForm, AddProgressForm  # importing classes from forms file
+from flask_wtf import FlaskForm  # library to allow use of wtforms
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, DateField  # fields for forms
+from wtforms.validators import DataRequired, Length, Email  # validation types within forms
+from flask_wtf.csrf import CSRFProtect  # allowing CSRF protection
+from contextlib import contextmanager
+import os
 from dotenv import load_dotenv
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 if not app.config['SECRET_KEY']:
     raise ValueError("No FLASK_SECRET_KEY set in environment or .env file!")
+
+csrf = CSRFProtect(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -73,20 +82,29 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
 
 @login_manager.user_loader
 def load_user(user_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT id, username FROM Users WHERE id = ?', (user_id,))
-    user = cursor.fetchone()
-    conn.close()
-    if User:
-        return User(id=user['id'], username=user['username'])
-    return None
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT id, username FROM Users WHERE id = ?', (user_id,))
+            user = cursor.fetchone()
 
+            if User:
+                return User(id=user['id'], username=user['username'])
+            return None
+
+    except Exception as e:
+        print(f'Error loading user {user_id}: {e}')
+        return None
+
+
+@contextmanager
 def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
-    return conn
-
+    try: # waits for the connection to finish, keeping it open until it is done so it can be closed
+        yield conn
+    finally:
+        conn.close
 @app.route('/add_log', methods=['GET', 'POST'])
 @login_required
 def add_log():

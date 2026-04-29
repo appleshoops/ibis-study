@@ -2,6 +2,7 @@
 {% block title %}Login - Smart Study Quiz App{% endblock %}
 {% block content %}
         <form method="POST" action="{{ url_for('login') }}">
+            {{ form.csrf_token }}
             <h2>Login</h2>
             <p>Username <br>
             <input type="text" name="username" placeholder="Username" required></p>
