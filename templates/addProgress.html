@@ -1,7 +1,7 @@
 {% extends 'base.html' %}   
 {% block title %}Add Logs - Smart Study Quiz App{% endblock %}
 {% block content %}
-        <form method="POST" action="{{ url_for('add_log') }}">
+        <form method="POST" action="{{ url_for('add_progress') }}">
             {{ form.csrf_token }}
             <h2>Add Progress</h2>
             <p>Date </br>

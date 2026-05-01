@@ -20,19 +20,23 @@ app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 if not app.config['SECRET_KEY']:
     raise ValueError("No FLASK_SECRET_KEY set in environment or .env file!")
 
+# enable csrf protection
 csrf = CSRFProtect(app)
 
+# initialise flask login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = "Please log in to access this page"
 login_manager.login_message_category = 'error'
 
+# user class for flask login
 class User(UserMixin):
     def __init__(self, id, username):
         self.id = id
         self.username = username
 
+# cleaning inputs
 def clean_input(s: str, allow_html: bool = False) -> str:
     s = s.strip()
     if allow_html:
@@ -85,15 +89,19 @@ def load_user(user_id):
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT id, username FROM Users WHERE id = ?', (user_id,))
+            cursor.execute(
+                'SELECT id, username FROM Users WHERE id = ?',
+                (user_id,)
+            )
             user = cursor.fetchone()
 
-            if User:
-                return User(id=user['id'], username=user['username'])
-            return None
+        if user:
+            return User(id=user['id'], username=user['username'])
+        return None
 
     except Exception as e:
-        print(f'Error loading user {user_id}: {e}')
+        # Log the error in development, but don't expose it to user
+        print(f"Error loading user {user_id}: {e}")  # Replace with proper logging later
         return None
 
 
@@ -104,41 +112,33 @@ def get_db_connection():
     try: # waits for the connection to finish, keeping it open until it is done so it can be closed
         yield conn
     finally:
-        conn.close
-@app.route('/add_log', methods=['GET', 'POST'])
+        conn.close()
+@app.route('/add_progress', methods=['GET', 'POST'])
 @login_required
-def add_log():
-    """
-    if 'user_id' not in session:
-        flash('You are not logged in', 'error')
-        return redirect(url_for('login'))
-    """
-    if request.method == 'POST':
-        date = request.form['date']
-        rawtitle = request.form['title']
-        rawdetails = request.form['details']
+def add_progress():
+    form = AddProgressForm()
 
-        title = clean_log_title(rawtitle)
-        details =clean_log_details(rawdetails)
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
+    if form.validate_on_submit():
+        date_str = form.date.data.strftime('%Y-%m-%d')   # Convert date to string
+        title = clean_log_title(form.title.data)
+        details = clean_log_details(form.details.data)
 
         try:
-            cursor.execute(
-                "INSERT INTO ProgressLogs (user_id, date, title, details) VALUES (?, ?, ?, ?)", (current_user.id, date, title, details)
-            )
-            conn.commit()
-            flash('Log successfully created!', 'success')
-            return redirect(url_for('view_log'))
-        except sqlite3.IntegrityError:
-            conn.close()
-            flash('Invalid entry, please enter all fields', 'error')
-        except Exception as e:
-            conn.close()
-            flash(f'Error: {str(e)}', 'error')
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO ProgressLogs (user_id, date, title, details) VALUES (?, ?, ?, ?)",
+                    (current_user.id, date_str, title, details)
+                )
+                conn.commit()
 
-    return render_template('addLog.html', username=current_user.username)
+            flash('Progress log added successfully!', 'success')
+            return redirect(url_for('view_log'))
+
+        except Exception as e:
+            flash('An error occurred while saving your progress.', 'error')
+
+    return render_template('addProgress.html', form=form, username=current_user.username)
 @app.route('/create_question', methods=['GET', 'POST'])
 @login_required
 def createQuestion():
@@ -219,14 +219,7 @@ def createQuiz():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT display_name, score FROM Users WHERE id = ?", (current_user.id,))
-    user_data = cursor.fetchone()
-    conn.close()
-    display_name = user_data['display_name'] if user_data and 'display_name' in user_data else current_user.username
-    total_score = user_data['total_score'] if user_data and 'total_score' in user_data else 0
-    return render_template('dashboard.html', display_name=display_name, total_score=total_score)
+    return render_template('dashboard.html', username=current_user.username)
 
 @app.route('/flashcard_set_select', methods=['GET', 'POST'])
 @login_required
@@ -360,32 +353,36 @@ def index():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
 
-        # Insecure: Plain-text password comparison
-        conn = get_db_connection()
-        cursor = conn.cursor()
+    form = LoginForm()  # reference to the login form class
 
-        cursor.execute("SELECT id, username, hashed_password FROM Users WHERE username = ?", (username,))
+    if form.validate_on_submit():  # run the following code if the data in it is valid
+        username = form.username.data.strip()  # cleaning the username and storing it
+        password = form.password.data
 
-        user = cursor.fetchone()
-        conn.close()
+        try:
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                # check if user exists - if so return id, username, hashed pw
+                cursor.execute(
+                    "SELECT id, username, hashed_password FROM Users WHERE username = ?",
+                    (username,)
+                )
+                user_row = cursor.fetchone()
 
-        if user:
-            if check_password_hash(user['hashed_password'] ,password):
-                login_user(User(id=user['id'], username=user['username']))
-                flash('Login Successful!', 'success')
+            # if user exists and passwords match
+            if user_row and check_password_hash(user_row['hashed_password'], password):
+                user = User(id=user_row['id'], username=user_row['username'])
+                login_user(user)
+                flash('Login successful!', 'success')
                 return redirect(url_for('dashboard'))
             else:
-                flash('Invalid Username Or Password', 'error')
-                return redirect(url_for('login'))
-        else:
-            flash('Invalid Username Or Password', 'error')
-            return redirect(url_for('login'))
+                flash('Invalid username or password.', 'error')
 
-    return render_template('login.html')
+        except Exception as e:
+            flash('An error occurred during login. Please try again.', 'error')
+
+    return render_template('login.html', form=form)
 
 @app.route('/quiz', methods=['GET', 'POST'])
 @login_required
@@ -510,80 +507,65 @@ def logout():
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
-    if request.method == 'POST':
-        # remove trailing whitespaces
-        raw_username = request.form.get('username').strip()
-        raw_displayName = request.form.get('displayName').strip()
-        raw_email = request.form.get('email').strip()
 
-        username = clean_input(raw_username)
-        displayName = clean_input(raw_displayName)
-        email = clean_input(raw_email)
+    form = RegistrationForm()
 
-        # username = request.form['username']
-        # displayName = request.form['displayName']
-        # email = request.form['email']
-        password = request.form['password']
-        confirmPassword = request.form['confirmPassword']
-        # hashedPassword = generate_password_hash(password)
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        if password != confirmPassword:
-            flash('Passwords do not match', 'error')
-            return redirect(url_for('register'))
-
-        pw_valid, pw_msg = validate_password_strength(password)
-        if not pw_valid:
-            flash(pw_msg, 'error')
-            return redirect(url_for('register'))
-
-        email_valid, email_msg = validate_email_strict(email)
-        if not email_valid:
-            flash(email_msg, 'error')
-            return redirect(url_for('register'))
+    if form.validate_on_submit():
+        username = clean_input(form.username.data)
+        displayName = clean_input(form.displayName.data)
+        email = clean_input(form.email.data)
+        password = form.password.data
 
         try:
-            # add the user to the users SQL database
-            cursor.execute(
-                f"INSERT INTO Users (username, hashed_password, email, display_name) VALUES (?, ?, ?, ?)",  (username, generate_password_hash(password), email, displayName)
-            )
-            conn.commit()
-            flash('Registration successful', 'success')
-            # automatically log the user in
-            cursor.execute("SELECT id, username, hashed_password FROM Users WHERE username = ?", (username,))
-            user = cursor.fetchone()
-            login_user(User(id=user['id'], username=user['username']))
-            conn.close()
-            return redirect(url_for('dashboard'))
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                hashed_password = generate_password_hash(password)
+
+                cursor.execute(
+                    """INSERT INTO Users (username, hashed_password, email, display_name)
+                       VALUES (?, ?, ?, ?)""",
+                    (username, hashed_password, email, displayName)
+                )
+                conn.commit()
+
+                cursor.execute("SELECT id, username FROM Users WHERE username = ?", (username,))
+                user_row = cursor.fetchone()
+
+            if user_row:
+                new_user = User(id=user_row['id'], username=user_row['username'])
+                login_user(new_user)
+                flash('Registration successful! Welcome!', 'success')
+                return redirect(url_for('dashboard'))
+
         except sqlite3.IntegrityError:
-            conn.close()
-            flash('Username or email already exists', 'error')
-            return redirect(url_for('register'))
+            flash('Username or email already exists.', 'error')
         except Exception as e:
-            conn.close()
-            flash(f'Error: {str(e)}', 'error')
-            return redirect(url_for('register'))
+            flash('An unexpected error occurred. Please try again.', 'error')
 
-        # exists = cursor.execute(f"SELECT COUNT(username) FROM Users WHERE username = '{username}'")
-    return render_template('register.html')
+    return render_template('register.html', form=form)
 
-@app.route('/view_log', methods=['GET', 'POST'])
+@app.route('/view_log', methods=['GET'])
 @login_required
 def view_log():
-    """if 'user_id' not in session:
-        flash('You are not currently logged in', 'error')
-        return redirect(url_for('login'))"""
-    if request.method == 'GET':
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        # getting the posts and stuff by checking all posts from a certain user id
-        cursor.execute("SELECT date, title, details FROM ProgressLogs WHERE user_id = ? ORDER BY DATE DESC", (current_user.id,))
-        posts = cursor.fetchall()
-        conn.close()
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT date, title, details
+                FROM ProgressLogs
+                WHERE user_id = ?
+                ORDER BY date DESC
+                """,
+                (current_user.id,)
+            )
+            posts = cursor.fetchall()
 
-    return render_template('viewLogs.html', posts = posts, username=current_user.username)
+        return render_template('viewLogs.html', posts=posts, username=current_user.username)
+
+    except Exception as e:
+        flash(f'Error loading your progress logs: {e}', 'error')
+        return redirect(url_for('dashboard'))
 
 @app.route('/update_score_and_home', methods=['POST'])
 @login_required
