@@ -127,6 +127,34 @@ input:focus {
     transform: translate(2px, 2px);
 }
 
+input[type="file"] {
+    background-color: white;
+    cursor: pointer;
+    padding: 0;
+    overflow: hidden;
+}
+
+input[type="file"]::file-selector-button {
+    border: none;
+    border-right: 2px solid #1c1b1b;
+    min-height: 34px;
+    padding: 0 1em;
+    margin-right: 1em;
+    background-color: white;
+    font-family: 'Manrope', sans-serif;
+    cursor: pointer;
+    transition:
+        background-color 500ms ease-in-out,
+        font-weight 500ms ease-in-out,
+        letter-spacing 500ms ease-in-out;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: #50c78d;
+    font-weight: bolder;
+    letter-spacing: 1px;
+}
+
 
 textarea {
     border: 2px solid #1c1b1b;
@@ -199,6 +227,29 @@ button:active {
     width: 90vw;
     border: 2px solid #1c1b1b;
     box-shadow: 10px 10px #1c1b1b;
+}
+
+.logText {
+    flex: 1;
+    min-width: 250px;
+}
+
+.logHeader {
+    display: flex;
+    justify-content: space-between;
+    gap: 1em;
+    flex-wrap: wrap;
+    margin-bottom: 1em;
+}
+
+.logImage {
+    width: 150px;
+    max-width: 100%;
+    height: auto;
+    object-fit: cover;
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 10px;
 }
 
 hr {

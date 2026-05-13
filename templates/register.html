@@ -5,16 +5,16 @@
             {{ form.csrf_token }}
             <h2>Register</h2>
             <p>username
-            <input type="text" name="username" placeholder="Username" required></p>
+                {{ form.username() }}</p>
             <p>display name
-            <input type="text" name="displayName" placeholder="Display Name" required></p>
+                {{ form.displayName() }}</p>
             <p>email
-            <input type="email" name="email" placeholder="Email" required></p>
+                {{ form.email() }}</p>
             <p>password
-            <input type="password" name="password" placeholder="Password" required></p>
+                {{ form.password() }}</p>
             <p>confirm password
-            <input type="password" name="confirmPassword" placeholder="Confirm Password" required></p> </br>
-            <button type="submit">Register</button>
+                {{ form.confirmPassword() }}</p>
+            {{ form.submit() }}
 
         </form>
 

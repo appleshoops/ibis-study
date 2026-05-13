@@ -3,7 +3,7 @@
 {% block content %}
         <h4>View your progress</h4> <br>
         <div style="display: flex; justify-content: center">
-            <a href="{{ url_for('add_log') }}" style="align-content: center">
+            <a href="{{ url_for('add_progress') }}" style="align-content: center">
                 <button style="width: 250px; ">Add Log</button>
             </a>
         </div>
@@ -11,9 +11,19 @@
             <div class="logGrid">
                 {% for post in posts %}
                     <div class="log">
-                        <h3>{{ post.title }}</h3>
-                        <h3>{{ post.date }}</h3>
-                        <p>{{ post.details }}</p>
+                        <div class="logText">
+                            <div class="logHeader">
+                                <h3>{{ post.title }}</h3>
+                                <h3>{{ post.date }}</h3>
+                            </div>
+                            <p>{{ post.details }}</p>
+                        </div>
+
+                        {% if post.image_path %}
+                            <img class="logImage"
+                                 src="{{ url_for('static', filename=post.image_path) }}"
+                                 alt="Progress image for {{ post.title }}">
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>

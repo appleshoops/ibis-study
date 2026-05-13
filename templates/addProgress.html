@@ -1,17 +1,22 @@
 {% extends 'base.html' %}   
 {% block title %}Add Logs - Smart Study Quiz App{% endblock %}
 {% block content %}
-        <form method="POST" action="{{ url_for('add_progress') }}">
+        <form method="POST"
+              action="{{ url_for('add_progress') }}"
+              enctype="multipart/form-data"
+              novalidate>
             {{ form.csrf_token }}
             <h2>Add Progress</h2>
             <p>Date </br>
-            <input type="date" name="date" required></p>
+                {{ form.date() }}</p>
             <p>Title </br>
-            <input type="text" name="title" maxlength="100" placeholder="Title" required></p>
+                {{ form.title() }}</p>
             <p>Details </br>
-                <textarea class="details" name="details" placeholder="Details" required></textarea></p>
+                {{ form.details() }}</p>
             <br>
-            <button type="submit">Add Progress</button>
+            <p>Image </br>
+                {{ form.image() }}</p>
+            {{ form.submit() }}
 
         </form>
 

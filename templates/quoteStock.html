@@ -1,0 +1,12 @@
+{% extends 'base.html' %}   
+{% block title %}Quote Stock – Ibis Finance{% endblock %}
+{% block content %}
+        <form method="POST" action="{{ url_for('quote_stock') }}">
+            {{ form.csrf_token }}
+            <h2>Quote Stock</h2>
+            <p>Ticker Name <br>
+                {{ form.tickerName() }}</p>
+            <p>{{ form.submit() }}</p>
+
+        </form>
+{% endblock %}

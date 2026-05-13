@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 from flask_login import login_required, LoginManager, UserMixin, current_user, login_user, logout_user
 import sqlite3
 import logging  # library for logging security events
 import bleach  # library for sanitisation of data
 from email_validator import validate_email, EmailNotValidError
 from zxcvbn import zxcvbn  # password rules
-from forms import RegistrationForm, LoginForm, AddProgressForm  # importing classes from forms file
+from forms import RegistrationForm, LoginForm, AddProgressForm, QuoteForm  # importing classes from forms file
 from flask_wtf import FlaskForm  # library to allow use of wtforms
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField, DateField  # fields for forms
 from wtforms.validators import DataRequired, Length, Email  # validation types within forms
@@ -14,6 +15,7 @@ from flask_wtf.csrf import CSRFProtect  # allowing CSRF protection
 from contextlib import contextmanager
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
@@ -22,6 +24,11 @@ if not app.config['SECRET_KEY']:
 
 # enable csrf protection
 csrf = CSRFProtect(app)
+
+UPLOAD_FOLDER = 'static/upload'
+ALLOWED_EXTENTIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp']
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True) # create uploads folder if it doesn't exist
 
 # initialise flask login
 login_manager = LoginManager()
@@ -56,11 +63,12 @@ def clean_log_title(s: str, allow_html: bool = False) -> str:
     cleaned = bleach.clean(s, tags=[], strip=True)
     return cleaned[:100]
 
+# strip all logs of dangerous characters
 def clean_log_details(s: str) -> str:
     s = s.strip()
     return bleach.clean(
         s,
-        tags=['p', 'br', 'strong', 'en', 'ul', 'ol', 'li', 'u'],
+        tags=['p', 'br', 'strong', 'en', 'ul', 'ol', 'li', 'u'], # only allow certain tags related to the log details
         attributes={},
         strip=True
     )
@@ -73,20 +81,23 @@ def validate_email_strict(email: str) -> tuple[bool, str]:
     except EmailNotValidError as e:
         return False, str(e)
 
+# makes sure passwords meet security requirements
 def validate_password_strength(password: str) -> tuple[bool, str]:
-    if len(password) < 10:
+    if len(password) < 10: # makes sure passwords are at least 10 characters long for security
         return False, "Password must be at least 10 characters long"
 
     result = zxcvbn(password)
-    if result['score'] < 3:
+    if result['score'] < 3: # feeds password into zxcvbn module and makes sure it reaches a certain level of security
         warning = result['feedback']['warning'] or "Password is too weak"
-        suggestions = " ".join(result['feedback']['suggestions'])
+        suggestions = " ".join(result['feedback']['suggestions']) # gives a suggestion to increase password security
         return False, f"{warning} {suggestions}".strip()
     return True, "Strong password"
 
+# creates login manager
 @login_manager.user_loader
 def load_user(user_id):
     try:
+        # checks if user exists in SQL table
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -116,33 +127,62 @@ def get_db_connection():
 @app.route('/add_progress', methods=['GET', 'POST'])
 @login_required
 def add_progress():
-    form = AddProgressForm()
+    form = AddProgressForm()  # for prevention of CSRF
 
     if form.validate_on_submit():
         date_str = form.date.data.strftime('%Y-%m-%d')   # Convert date to string
-        title = clean_log_title(form.title.data)
+        title = clean_log_title(form.title.data)  # input sanitisation
         details = clean_log_details(form.details.data)
+
+        # Uploading images
+        image_path = None  # initialising image_path
+        if form.image.data and form.image.data.filename:
+            file = form.image.data  # store image into variable
+            print(f"DEBUG: File received - Filename: {file.filename}")
+            print(f"DEBUG: File content type: {file.content_type}")
+
+            filename = secure_filename(file.filename)  # run the filename through werkzeug
+            unique_filename = f"user_{current_user.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"  # adding metadata to file name
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)  # set the file path with the folder so the app knows where to store the file
+
+            try:
+                # uploads the file to the server
+                file.save(file_path)
+                image_path = f"upload/{unique_filename}"
+                print(f"DEBUG: Image successfully saved to: {file_path}")
+                print(f"DEBUG: image_path saved in DB will be: {image_path}")
+            except Exception as e:
+                print(f"ERROR saving image: {e}")
+                flash(f'Failed to save image: {str(e)}', 'warning')
+        else:
+            print("DEBUG: No image file was uploaded or filename was empty")
+
 
         try:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    "INSERT INTO ProgressLogs (user_id, date, title, details) VALUES (?, ?, ?, ?)",
-                    (current_user.id, date_str, title, details)
+                    "INSERT INTO ProgressLogs (user_id, date, title, details, image_path) VALUES (?, ?, ?, ?, ?)",
+                    (current_user.id, date_str, title, details, image_path)
                 )
                 conn.commit()
 
             flash('Progress log added successfully!', 'success')
-            return redirect(url_for('view_log'))
+            return redirect(url_for('add_progress'))
 
         except Exception as e:
             flash('An error occurred while saving your progress.', 'error')
+            print(f"ERROR saving progress: {e}")
+            import traceback
+            traceback.print_exc()  # Print full traceback in console
 
     return render_template('addProgress.html', form=form, username=current_user.username)
+
 @app.route('/create_question', methods=['GET', 'POST'])
 @login_required
 def createQuestion():
     quiz_data = None
+    # fetches the selected quiz and its details
     if request.method == 'GET':
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -154,9 +194,11 @@ def createQuestion():
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # finds the number of questions in the selected quiz
         cursor.execute("SELECT numQuestions FROM Quizzes WHERE id = ?", (session['created_quiz_id'],))
         quiz_data = cursor.fetchone()
 
+        # creates a new question create field for the number of questions previously defined in the quiz
         num_questions = quiz_data['numQuestions']
         for i in range(num_questions):
             question = request.form.get(f'question_{i}')
@@ -290,8 +332,6 @@ def flashcardSetDelete():
     conn.commit()
     conn.close()
     return redirect(url_for('flashcardSetSelect'))
-
-
 
 @app.route('/flashcard_set_create', methods=['GET', 'POST'])
 @login_required
@@ -495,6 +535,16 @@ def quizSelect():
 
     return render_template('quizSelect.html', quizzes=quiz_data, user_id=session.get('user_id'))
 
+@app.route('/quote_stock')
+@login_required
+def quote_stock():
+    form = QuoteForm()
+
+    if form.validate_on_submit():
+        tickerName = clean_log_title(form.tickerName.data)
+
+    return render_template("quoteStock.html", form=form, username=current_user)
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -552,7 +602,7 @@ def view_log():
             cursor = conn.cursor()
             cursor.execute(
                 """
-                SELECT date, title, details
+                SELECT date, title, details, image_path
                 FROM ProgressLogs
                 WHERE user_id = ?
                 ORDER BY date DESC
