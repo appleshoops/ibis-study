@@ -539,7 +539,6 @@ def quizSelect():
 @login_required
 def quote_stock():
     form = QuoteForm()
-
     if form.validate_on_submit():
         tickerName = clean_log_title(form.tickerName.data)
 
