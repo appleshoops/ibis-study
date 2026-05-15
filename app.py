@@ -5,6 +5,7 @@ from flask_login import login_required, LoginManager, UserMixin, current_user, l
 import sqlite3
 import logging  # library for logging security events
 import bleach  # library for sanitisation of data
+import yfinance as yf
 from email_validator import validate_email, EmailNotValidError
 from zxcvbn import zxcvbn  # password rules
 from forms import RegistrationForm, LoginForm, AddProgressForm, QuoteForm  # importing classes from forms file
@@ -124,6 +125,26 @@ def get_db_connection():
         yield conn
     finally:
         conn.close()
+
+
+def get_stock_info(ticker: str):
+    if not ticker or len(ticker.strip()) < 1:  # if the ticker name is too short
+        return None, None, "Please enter a valid ticker symbol"
+
+    ticker = ticker.upper().strip()
+
+    stock = yf.ticker(ticker)
+
+    try:
+        stock = yf.ticker(ticker)
+        info = stock.info
+
+        # current price
+        current_pruce = None
+        for key in ['currentPrice', 'regularMarketPrice', 'price']:
+            if info.get(key):
+                current_price = info.get(key)
+                break
 @app.route('/add_progress', methods=['GET', 'POST'])
 @login_required
 def add_progress():
@@ -539,10 +560,23 @@ def quizSelect():
 @login_required
 def quote_stock():
     form = QuoteForm()
+
     if form.validate_on_submit():
+        stock_data = None
+        chart_data = None
+        error = None
         tickerName = clean_log_title(form.tickerName.data)
 
-    return render_template("quoteStock.html", form=form, username=current_user)
+        if request.method == 'POST':
+            tickerName = request.form.get('tickerName', '').strip()
+
+        if tickerName:
+            stock_data, chart_data, error = get_stock_info(tickerName)
+        else:
+            error = "Please enter a stock ticker (e.g. AAPL)"
+
+    return render_template('quote_Stock.html', form=form, stock_data=stock_data, chart_data=chart_data, error=error,
+                               tickerName=tickerName, username=current_user.username)
 
 @app.route('/logout')
 @login_required
