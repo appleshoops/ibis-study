@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Smart Study Quiz App{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    {% block extra_head %}
+    {% endblock %}
 </head>
 <body>
     <header>
@@ -15,12 +17,13 @@
                 <a href="{{ url_for('register') }}">Register</a>
 
             {% else %}
-{#                <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('flashcardSetSelect') }}">Flashcards</a>
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                {# <a href="{{ url_for('flashcardSetSelect') }}">Flashcards</a>
                 <a href="{{ url_for('quizSelect') }}">Quizzes</a>#}
                 <a href="{{ url_for('view_log') }}">Logs</a>
                 <a href="{{ url_for('logout') }}">Logout</a>
                 <a href="{{ url_for('quote_stock') }}">Quote Stock</a>
+                <a href="{{ url_for('transactions') }}">Transactions</a>
             {% endif %}
         </nav>
     </header>
@@ -36,5 +39,6 @@
         {% block content %}
         {% endblock %}
     </content>
+    {%  block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -6,6 +6,8 @@ import sqlite3
 import logging  # library for logging security events
 import bleach  # library for sanitisation of data
 import yfinance as yf
+import plotly.express as px
+import plotly.io as pio
 from email_validator import validate_email, EmailNotValidError
 from zxcvbn import zxcvbn  # password rules
 from forms import RegistrationForm, LoginForm, AddProgressForm, QuoteForm  # importing classes from forms file
@@ -57,7 +59,7 @@ def clean_input(s: str, allow_html: bool = False) -> str:
     else:
         return bleach.clean(s, tags=[], strip=True)
 
-def clean_log_title(s: str, allow_html: bool = False) -> str:
+def clean_log_title(s: str) -> str:
     # strip all dangerous content
     s = s.strip()
     # remove all HTML
@@ -128,23 +130,48 @@ def get_db_connection():
 
 
 def get_stock_info(ticker: str):
-    if not ticker or len(ticker.strip()) < 1:  # if the ticker name is too short
+    if not ticker or len(ticker.strip()) < 1:  # if ticker name is too short
         return None, None, "Please enter a valid ticker symbol"
 
-    ticker = ticker.upper().strip()
-
-    stock = yf.ticker(ticker)
+    ticker = ticker.upper().strip()  # convert to uppercase, remove any unwanted spaces
 
     try:
-        stock = yf.ticker(ticker)
+        stock = yf.Ticker(ticker)
         info = stock.info
 
-        # current price
-        current_pruce = None
+        # Current price -- get the first price found then exit loop
+        current_price = None  # initialise current price
         for key in ['currentPrice', 'regularMarketPrice', 'price']:
             if info.get(key):
                 current_price = info.get(key)
                 break
+
+        stock_data = {
+            'ticker': ticker,
+            'name': info.get('longName') or info.get('shortName') or f"{ticker} Stock",
+            'current_price': round(current_price, 2) if current_price else None,
+            'previous_close': round(info.get('regularMarketPreviousClose', 0), 2),
+            'market_cap': info.get('marketCap'),
+            'currency': info.get('currency', 'USD'),
+            'summary': info.get('longBusinessSummary'),
+            'last_updated': datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+
+        # Get historical data for chart (last 3 months)
+        hist = stock.history(period="3mo")
+        chart_data = None
+
+        if not hist.empty:
+            chart_data = {
+                'dates': hist.index.strftime('%Y-%m-%d').tolist(),
+                'close': hist['Close'].round(2).tolist()
+            }
+
+        return stock_data, chart_data, None
+
+    except Exception as e:
+        print(f"Error fetching {ticker}: {e}")
+        return None, None, f"Failed to fetch data for {ticker}. Please try again."
 @app.route('/add_progress', methods=['GET', 'POST'])
 @login_required
 def add_progress():
@@ -198,6 +225,75 @@ def add_progress():
             traceback.print_exc()  # Print full traceback in console
 
     return render_template('addProgress.html', form=form, username=current_user.username)
+
+@app.route('/buy_stock', methods=['POST', 'GET'])
+@login_required
+def buy_stock():
+    ticker = request.form.get('ticker', '').strip().upper()
+    shares = request.form.get('shares', type=int)
+
+    if not ticker or not shares or shares <= 0:
+        flash('Invalid ticker or number of shares.', 'error')
+        return redirect(url_for('buy_stock'))
+
+    # Get current price
+    stock_data, _, error = get_stock_info(ticker)
+    if error or not stock_data or not stock_data['current_price']:
+        flash('Could not fetch current price. Please try again.', 'error')
+        return redirect(url_for('buy_stock'))
+
+    price_per_share = stock_data['current_price']
+    total_cost = round(price_per_share * shares, 2)
+
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+
+            # Get user's current cash balance
+            cursor.execute("SELECT cash_balance FROM UserBalances WHERE user_id = ?", (current_user.id,))
+            balance_row = cursor.fetchone()
+            current_balance = balance_row['cash_balance'] if balance_row else 0.0
+
+            if current_balance < total_cost:
+                flash(f'Insufficient funds! You need ${total_cost:,.2f} but only have ${current_balance:,.2f}', 'error')
+                return redirect(url_for('buy_stock'))
+
+            # Update cash balance
+            new_balance = round(current_balance - total_cost, 2)
+            cursor.execute(
+                "UPDATE UserBalances SET cash_balance = ? WHERE user_id = ?",
+                (new_balance, current_user.id)
+            )
+
+            # Update or insert into Portfolio
+            cursor.execute("""
+                INSERT INTO Portfolio (user_id, ticker, shares, average_buy_price)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(user_id, ticker) 
+                DO UPDATE SET 
+                    shares = shares + ?,
+                    average_buy_price = ((average_buy_price * shares) + (? * ?)) / (shares + ?),
+                    last_updated = CURRENT_TIMESTAMP
+            """, (current_user.id, ticker, shares, price_per_share,
+                  shares, price_per_share, shares, shares))
+
+            # Record transaction
+            cursor.execute("""
+                INSERT INTO Transactions 
+                (user_id, ticker, transaction_type, shares, price_per_share, total_amount)
+                VALUES (?, ?, 'BUY', ?, ?, ?)
+            """, (current_user.id, ticker, shares, price_per_share, total_cost))
+
+            conn.commit()
+
+        flash(f'Successfully bought {shares} shares of {ticker} for ${total_cost:,.2f}', 'success')
+        return redirect(url_for('quote_stock', ticker=ticker))   # Stay on same ticker
+
+    except Exception as e:
+        flash('An error occurred while processing your purchase.', 'error')
+        print(f"Buy error: {e}")
+        return redirect(url_for('buy_stock'))
+
 
 @app.route('/create_question', methods=['GET', 'POST'])
 @login_required
@@ -282,7 +378,135 @@ def createQuiz():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html', username=current_user.username)
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("SELECT cash_balance FROM UserBalances WHERE user_id = ?", (current_user.id,))
+            balance_row = cursor.fetchone()
+            cash_balance = float(balance_row['cash_balance']) if balance_row else 0.0
+
+            cursor.execute("""
+                           SELECT ticker, shares, average_buy_price
+                           FROM Portfolio
+                           WHERE user_id = ?
+                           ORDER BY ticker
+                           """, (current_user.id,))
+            holdings = cursor.fetchall()
+
+        # First pass: Calculate market values and total portfolio value
+        enhanced_holdings = []
+        portfolio_value = 0.0
+        total_unrealized_pnl = 0.0
+        total_cost_basis = 0.0
+
+        for holding in holdings:
+            ticker = holding['ticker']
+            shares = holding['shares']
+            avg_buy_price = holding['average_buy_price']
+
+            stock_data, _, error = get_stock_info(ticker)
+            current_price = stock_data['current_price'] if stock_data and not error else None
+
+            if current_price:
+                market_value = round(shares * current_price, 2)
+                unrealized_pnl = round((current_price - avg_buy_price) * shares, 2)
+                cost_basis = round(avg_buy_price * shares, 2)
+
+                portfolio_value += market_value
+                total_unrealized_pnl += unrealized_pnl
+                total_cost_basis += cost_basis
+
+                enhanced_holdings.append({
+                    'ticker': ticker,
+                    'shares': shares,
+                    'avg_buy_price': round(avg_buy_price, 2),
+                    'current_price': round(current_price, 2),
+                    'market_value': market_value,
+                    'unrealized_pnl': unrealized_pnl,
+                    'pnl_percent': round(((current_price - avg_buy_price) / avg_buy_price * 100),
+                                         2) if avg_buy_price > 0 else 0,
+                    'weight': 0  # placeholder
+                })
+            else:
+                enhanced_holdings.append({
+                    'ticker': ticker,
+                    'shares': shares,
+                    'avg_buy_price': round(avg_buy_price, 2),
+                    'current_price': None,
+                    'market_value': None,
+                    'unrealized_pnl': None,
+                    'pnl_percent': None,
+                    'weight': 0
+                })
+
+        total_portfolio_value = round(cash_balance + portfolio_value, 2)
+        overall_return = round(((portfolio_value - total_cost_basis) / total_cost_basis * 100),
+                               2) if total_cost_basis > 0 else 0
+
+        # Second pass: Calculate correct weights
+        if portfolio_value > 0:
+            for holding in enhanced_holdings:
+                if holding['market_value']:
+                    holding['weight'] = round((holding['market_value'] / portfolio_value) * 100, 1)
+
+        # Prepare data for Plotly pie chart
+        tickers_for_pie = [h['ticker'] for h in enhanced_holdings if h['market_value']]
+        weights_for_pie = [h['weight'] for h in enhanced_holdings if h['market_value']]
+
+        # Create Plotly Pie Chart
+        # import plotly.express as px
+        # import plotly.io as pio
+
+        allocation_chart = ""
+        if tickers_for_pie and weights_for_pie:
+            fig = px.pie(
+                names=tickers_for_pie,
+                values=weights_for_pie,
+                title="Asset Allocation by Market Value",
+                hole=0.1
+            )
+            fig.update_traces(textposition='inside', textinfo='percent+label')
+            fig.update_layout(height=450, showlegend=True)
+            allocation_chart = pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
+
+        # Top Gainer and Top Loser
+        top_gainer = max(enhanced_holdings, key=lambda x: x.get('unrealized_pnl') or -999999, default=None)
+        top_loser = min(enhanced_holdings, key=lambda x: x.get('unrealized_pnl') or 999999, default=None)
+        print(top_gainer)
+        print(top_loser)
+
+        return render_template('dashboard.html',
+                               cash_balance=round(cash_balance, 2),
+                               portfolio_value=round(portfolio_value, 2),
+                               total_portfolio_value=total_portfolio_value,
+                               total_unrealized_pnl=round(total_unrealized_pnl, 2),
+                               overall_return=overall_return,
+                               total_invested=round(total_cost_basis, 2),
+                               holdings=enhanced_holdings,
+                               top_gainer=top_gainer,
+                               top_loser=top_loser,
+                               allocation_chart=allocation_chart)
+
+    except Exception as e:
+        print(f"Dashboard error: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Error loading dashboard.', 'error')
+        return render_template(
+            'dashboard.html',
+            cash_balance=0,
+            portfolio_value=0,
+            total_portfolio_value=0,
+            total_unrealized_pnl=0,
+            overall_return=0,
+            total_invested=0,
+            holdings=[],
+            top_gainer=None,
+            top_loser=None,
+            allocation_chart=""
+        )
+
 
 @app.route('/flashcard_set_select', methods=['GET', 'POST'])
 @login_required
@@ -409,7 +633,7 @@ def flashcards():
 @app.route('/')
 def index():
     # return 'Index page'
-    return render_template('dashboard.html')
+    return redirect(url_for('login'))
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -444,6 +668,15 @@ def login():
             flash('An error occurred during login. Please try again.', 'error')
 
     return render_template('login.html', form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    session.pop('user_id', None)
+    logout_user()
+    flash('You have successfully logged out, come back soon!', 'success')
+    return redirect(url_for('login'))
+
 
 @app.route('/quiz', methods=['GET', 'POST'])
 @login_required
@@ -556,35 +789,26 @@ def quizSelect():
 
     return render_template('quizSelect.html', quizzes=quiz_data, user_id=session.get('user_id'))
 
-@app.route('/quote_stock')
+@app.route('/quote_stock', methods=['GET', 'POST'])
 @login_required
 def quote_stock():
     form = QuoteForm()
 
-    if form.validate_on_submit():
-        stock_data = None
-        chart_data = None
-        error = None
-        tickerName = clean_log_title(form.tickerName.data)
+    stock_data = None
+    chart_data = None
+    error = None
+    tickerName = None
 
-        if request.method == 'POST':
-            tickerName = request.form.get('tickerName', '').strip()
+    if form.validate_on_submit():
+        tickerName = request.form.get('tickerName', '').strip()
 
         if tickerName:
             stock_data, chart_data, error = get_stock_info(tickerName)
         else:
             error = "Please enter a stock ticker (e.g. AAPL)"
 
-    return render_template('quote_Stock.html', form=form, stock_data=stock_data, chart_data=chart_data, error=error,
+    return render_template('quoteStock.html', form=form, stock_data=stock_data, chart_data=chart_data, error=error,
                                tickerName=tickerName, username=current_user.username)
-
-@app.route('/logout')
-@login_required
-def logout():
-    session.pop('user_id', None)
-    logout_user()
-    flash('You have successfully logged out, come back soon!', 'success')
-    return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -626,6 +850,116 @@ def register():
             flash('An unexpected error occurred. Please try again.', 'error')
 
     return render_template('register.html', form=form)
+
+@app.route('/sell_stock', methods=['POST'])
+@login_required
+def sell_stock():
+    ticker = request.form.get('ticker', '').strip().upper()
+    shares_to_sell = request.form.get('shares', type=int)
+
+    if not ticker or not shares_to_sell or shares_to_sell < 1:
+        flash('Invalid ticker or number of shares.', 'error')
+        return redirect(url_for('dashboard'))
+
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+
+            # Get current holding
+            cursor.execute("""
+                SELECT shares, average_buy_price 
+                FROM Portfolio 
+                WHERE user_id = ? AND ticker = ?
+            """, (current_user.id, ticker))
+            holding = cursor.fetchone()
+
+            if not holding or holding['shares'] < shares_to_sell:
+                flash(f'You only own {holding["shares"] if holding else 0} shares of {ticker}. Cannot sell {shares_to_sell} shares.', 'error')
+                return redirect(url_for('dashboard'))
+
+            avg_buy_price = holding['average_buy_price']
+
+            # Get current market price
+            stock_data, _, error = get_stock_info(ticker)
+            if error or not stock_data or not stock_data.get('current_price'):
+                flash('Could not fetch current price. Please try again later.', 'error')
+                return redirect(url_for('dashboard'))
+
+            current_price = stock_data['current_price']
+            total_proceeds = round(current_price * shares_to_sell, 2)
+
+            # Update cash balance
+            cursor.execute("SELECT cash_balance FROM UserBalances WHERE user_id = ?", (current_user.id,))
+            balance_row = cursor.fetchone()
+            current_balance = float(balance_row['cash_balance']) if balance_row else 0.0
+            new_balance = round(current_balance + total_proceeds, 2)
+
+            cursor.execute(
+                "UPDATE UserBalances SET cash_balance = ? WHERE user_id = ?",
+                (new_balance, current_user.id)
+            )
+
+            # Update portfolio
+            remaining_shares = holding['shares'] - shares_to_sell
+            if remaining_shares > 0:
+                cursor.execute("""
+                    UPDATE Portfolio 
+                    SET shares = ?, last_updated = CURRENT_TIMESTAMP 
+                    WHERE user_id = ? AND ticker = ?
+                """, (remaining_shares, current_user.id, ticker))
+            else:
+                cursor.execute("DELETE FROM Portfolio WHERE user_id = ? AND ticker = ?",
+                             (current_user.id, ticker))
+
+            # Record transaction
+            cursor.execute("""
+                INSERT INTO Transactions 
+                (user_id, ticker, transaction_type, shares, price_per_share, total_amount)
+                VALUES (?, ?, 'SELL', ?, ?, ?)
+            """, (current_user.id, ticker, shares_to_sell, current_price, total_proceeds))
+
+            conn.commit()
+
+        flash(f'Successfully sold {shares_to_sell} shares of {ticker} for ${total_proceeds:,.2f}', 'success')
+
+    except Exception as e:
+        flash('An error occurred while selling the stock.', 'error')
+        print(f"Sell error: {e}")
+        import traceback
+        traceback.print_exc()
+
+    return redirect(url_for('dashboard'))
+
+@app.route('/transactions')
+@login_required
+def transactions():
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                           SELECT t.id,
+                                  t.ticker,
+                                  t.transaction_type,
+                                  t.shares,
+                                  t.price_per_share,
+                                  t.total_amount,
+                                  t.timestamp,
+                                  t.user_id
+                           FROM Transactions t
+                           WHERE t.user_id = ?
+                           ORDER BY t.timestamp DESC
+                           """, (current_user.id,))
+
+            transactions = cursor.fetchall()
+
+        return render_template('transactions.html',
+                               transactions=transactions,
+                               username=current_user.username)
+
+    except Exception as e:
+        print(f"Transactions error: {e}")
+        flash('Error loading transaction history.', 'error')
+        return redirect(url_for('dashboard'))
 
 @app.route('/view_log', methods=['GET'])
 @login_required
