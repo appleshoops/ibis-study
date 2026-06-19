@@ -9,7 +9,6 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-from PolynomialWithWeight import X_train, use_ridge
 from yfCollectData import stockDataCollection
 
 plt.style.use('ggplot')
@@ -19,6 +18,9 @@ def trainModel(ticker_symbol):
 
     X = training_data[['Volume', '52 Week Range Position', 'Top Sector ETF Close', 'Daily Returns']] # Sets features
     y = training_data[['Close']] # Sets what we're predicting to be the close value of the stock
+
+    print(f"✅ Dataset shape: {training_data.shape}")
+    print(f"Features used in model: {X.columns.tolist()}")
 
     # setting test/train split to be 20%
     X_train, X_test, y_train, y_test = train_test_split(
@@ -51,10 +53,77 @@ def trainModel(ticker_symbol):
     X_test_w['Daily Returns'] = X_test_w['Daily Returns'] * weight_daily_returns
 
     # polynomial features
+    print(f"🔹 Step 4: Polynomial Features (degree={degree})...")
     poly = PolynomialFeatures(degree=degree, include_bias=False)
 
     X_train_poly = poly.fit_transform(X_train_w)
     X_test_poly = poly.transform(X_test_w)
 
     print(f"Polynomial features shape: {X_train_poly.shape}")
+
+    # seeing if the user wants a polynomial or linear regression model
+    if use_ridge:
+        model = Ridge(alpha=ridge_alpha)
+        print(f"   Using Ridge (alpha={ridge_alpha})")
+    else:
+        model = LinearRegression()
+        print("   Using Linear Regression")
+
+    # training the model
+    model.fit(X_train_poly, y_train)
+    print("✅ Model training complete.")
+
+    # feature importance
+    feature_names = poly.get_feature_names_out()
+    coef_df = pd.DataFrame({
+        'Feature': feature_names,
+        'Abs Coefficient': np.abs(model.coef_)
+    })
+
+    volume_terms = [f for f in feature_names if 'Volume' in f]
+    week_52_pos_terms = [f for f in feature_names if '52 Week Range Position' in f]
+    etf_terms = [f for f in feature_names if 'Top Sector ETF Close' in f]
+    daily_returns_terms = [f for f in feature_names if 'Daily Returns' in f]
+
+    volume_imp = coef_df[coef_df['Feature'].isin(volume_terms)]['Abs Coefficient'].sum()
+    week_52_pos_imp = coef_df[coef_df['Feature'].isin(week_52_pos_terms)]['Abs Coefficient'].sum()
+    etf_imp = coef_df[coef_df['Feature'].isin(etf_terms)]['Abs Coefficient'].sum()
+    daily_returns_imp = coef_df[coef_df['Feature'].isin(daily_returns_terms)]['Abs Coefficient'].sum()
+
+    total = volume_imp + week_52_pos_imp + etf_imp + daily_returns_imp
+    print("\n📊 Relative Feature Importance (%):")
+    print(f"   Volume          : {(volume_imp / total * 100):.1f}%")
+    print(f"   52 Week Position    : {(week_52_pos_imp / total * 100):.1f}%")
+    print(f"   Top Sector ETF Close    : {(etf_imp / total * 100):.1f}%")
+    print(f"   Daily Returns    : {(daily_returns_imp / total * 100):.1f}%")
+    print(f"   (Total: 100.0%)")
+
+    y_test_pred = model.predict(X_test_poly)
+    print(f"\nTest R²:    {r2_score(y_test, y_test_pred):.4f}")
+    print(f"Test MAE:   {mean_absolute_error(y_test, y_test_pred):.4f}")
+
+    joblib.dump(poly, f'/poly/{ticker_symbol}_poly_transformer_grades.pkl')
+    joblib.dump(model, f'/model/{ticker_symbol}_polynomial_regression_model_grades.pkl')
+
+    # Plot actual vs predicted stock close price
+    y_test_flat = y_test.values.ravel()
+    y_test_pred_flat = y_test_pred.ravel()
+
+    min_price = min(y_test_flat.min(), y_test_pred_flat.min())
+    max_price = max(y_test_flat.max(), y_test_pred_flat.max())
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(
+        y_test_flat,
+        y_test_pred_flat,
+        color='steelblue',
+        alpha=0.7,
+        s=50
+    )
+    plt.plot([min_price, max_price], [min_price, max_price], 'r--', lw=2)
+    plt.xlabel("Actual Close Price")
+    plt.ylabel("Predicted Close Price")
+    plt.title(f"{ticker_symbol}: Actual vs Predicted Close Price (degree={degree})")
+    plt.grid(True)
+    plt.show()
 trainModel("NVDA")
