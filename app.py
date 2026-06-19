@@ -96,6 +96,7 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
         return False, f"{warning} {suggestions}".strip()
     return True, "Strong password"
 
+
 # creates login manager
 @login_manager.user_loader
 def load_user(user_id):
@@ -118,7 +119,6 @@ def load_user(user_id):
         print(f"Error loading user {user_id}: {e}")  # Replace with proper logging later
         return None
 
-
 @contextmanager
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -127,7 +127,6 @@ def get_db_connection():
         yield conn
     finally:
         conn.close()
-
 
 def get_stock_info(ticker: str):
     if not ticker or len(ticker.strip()) < 1:  # if ticker name is too short
@@ -293,7 +292,6 @@ def buy_stock():
         flash('An error occurred while processing your purchase.', 'error')
         print(f"Buy error: {e}")
         return redirect(url_for('buy_stock'))
-
 
 @app.route('/create_question', methods=['GET', 'POST'])
 @login_required

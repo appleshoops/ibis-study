@@ -1,15 +1,15 @@
 import yfinance as yf
+import pandas as pd
+import requests
+from collections import OrderedDict
 
-tickers = "NVDA"
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
 
-stock = yf.Ticker(tickers)
+ticker = "AAPL"
 
-print(f"Company Name: {stock.info.get('longName')}")
-print(stock.info.get('longBusinessSummary')[:300] + "...")
-print(f"Current Price: ${stock.info.get('currentPrice')}")
-print(f"Previous Close: ${stock.info.get('regularMarketPreviousClose')}")
-print(f"Market Cap: ${stock.info.get('marketCap')}")
+url = f'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers={ticker}&apikey=8T0TGH76R6PPITIC&limit=3000'
+r = requests.get(url)
+data = r.json()
 
-print("\n=== Recent Historical Data (Last 5 Days) ===")
-hist = stock.history(period="1mo")
-print(hist[['Open', 'High', 'Low', 'Close', 'Volume']].tail(5))
+print(data)
