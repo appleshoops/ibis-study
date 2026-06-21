@@ -420,6 +420,29 @@ hr {
     margin: 2em 0;
 }
 
+.card-body {
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 1em;
+    margin: 3em auto;
+    border-radius: 30px;
+    background-color: white;
+    height: auto;
+    width: 30em;
+    border: 2px solid #1c1b1b;
+    box-shadow: 10px 10px #1c1b1b;
+}
+
+.cardthingys {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 10px;
+
+}
+
 @keyframes flashPop {
     0% { opacity: 0; transform: translateY(-25px) scale(.94);}
     60% { opacity: 0.93; transform: translateY(6px) scale(1.05);}

@@ -1,79 +1,85 @@
 {% extends 'base.html' %}   
 {% block title %}Dashboard - Smart Study Quiz App{% endblock %}
 {% block content %}
+
+    <div class="cardthingys">
+        <div class="card text-white bg-primary shadow">
+        <div class="card-body">
+            <h5>Cash Balance</h5>
+            <h3>${{ cash_balance | default(0) | round(2) }}</h3>
+        </div>
+        </div>
+        <div class="card text-white bg-success shadow">
+        <div class="card-body">
+            <h5>Portfolio Value</h5>
+            <h3>${{ portfolio_value | default(0) | round(2) }}</h3>
+        </div>
+        </div>
+        <div class="card shadow">
+        <div class="card-body">
+            <h3>Overall Return</h3>
+            <h3 class="{% if overall_return >= 0 %}text-success{% else %}text-danger{% endif %}">
+                {{ overall_return }}%
+            </h3>
+        </div>
+        </div>
+        <div class="card shadow" style="background-color: {% if total_unrealized_pnl >= 0 %}#d4edda{% else %}#f8d7da{% endif %};">
+        <div class="card-body">
+            <h5>Total P&L</h5>
+            <h3 class="{% if total_unrealized_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                ${{ total_unrealized_pnl | default(0) | round(2) }}
+            </h3>
+        </div>
+        </div>
+    </div>
+
     <div class="container mt-4">
-
     <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-white bg-primary shadow">
-                <div class="card-body">
-                    <h5>Cash Balance</h5>
-                    <h3>${{ cash_balance | default(0) | round(2) }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-success shadow">
-                <div class="card-body">
-                    <h5>Portfolio Value</h5>
-                    <h3>${{ portfolio_value | default(0) | round(2) }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow" style="background-color: {% if overall_return >= 0 %}#d4edda{% else %}#f8d7da{% endif %};">
-                <div class="card-body">
-                    <h6>Overall Return</h6>
-                    <h3 class="{% if overall_return >= 0 %}text-success{% else %}text-danger{% endif %}">
-                        {{ overall_return }}%
-                    </h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow" style="background-color: {% if total_unrealized_pnl >= 0 %}#d4edda{% else %}#f8d7da{% endif %};">
-                <div class="card-body">
-                    <h5>Total P&L</h5>
-                    <h3 class="{% if total_unrealized_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
-                        ${{ total_unrealized_pnl | default(0) | round(2) }}
-                    </h3>
-                </div>
-            </div>
-        </div>
-    </div>
+            <div class="row mb-4">
+                <div class="col-md-3">
 
-    <!-- Top Gainer & Top Loser -->
-    <div class="row mb-4">
-        {% if top_gainer and top_gainer.unrealized_pnl > 0 %}
-        <div class="col-md-6">
-            <div class="card border-success">
-                <div class="card-body">
-                    <h6 class="text-success">Top Gainer</h6>
-                    <h5>{{ top_gainer.ticker }}</h5>
-                    <p class="mb-0 text-success">
-                        +${{ top_gainer.unrealized_pnl | round(2) }} ({{ top_gainer.pnl_percent }}%)
-                    </p>
+                </div>
+                <div class="col-md-3">
+
+                </div>
+                <div class="col-md-3">
+
+                </div>
+                <div class="col-md-3">
+
                 </div>
             </div>
-        </div>
-        {% endif %}
 
-        {% if top_loser and top_loser.unrealized_pnl < 0 %}
-        <div class="col-md-6">
-            <div class="card border-danger">
-                <div class="card-body">
-                    <h6 class="text-danger">Top Loser</h6>
-                    <h5>{{ top_loser.ticker }}</h5>
-                    <p class="mb-0 text-danger">
-                        ${{ top_loser.unrealized_pnl | round(2) }} ({{ top_loser.pnl_percent }}%)
-                    </p>
+            <!-- Top Gainer & Top Loser -->
+            <div class="row mb-4">
+                {% if top_gainer and top_gainer.unrealized_pnl > 0 %}
+                <div class="col-md-6">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h6 class="text-success">Top Gainer</h6>
+                            <h5>{{ top_gainer.ticker }}</h5>
+                            <p class="mb-0 text-success">
+                                +${{ top_gainer.unrealized_pnl | round(2) }} ({{ top_gainer.pnl_percent }}%)
+                            </p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        {% endif %}
-    </div>
+                {% endif %}
 
+                {% if top_loser and top_loser.unrealized_pnl < 0 %}
+                <div class="col-md-6">
+                    <div class="card border-danger">
+                        <div class="card-body">
+                            <h6 class="text-danger">Top Loser</h6>
+                            <h5>{{ top_loser.ticker }}</h5>
+                            <p class="mb-0 text-danger">
+                                ${{ top_loser.unrealized_pnl | round(2) }} ({{ top_loser.pnl_percent }}%)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
     <!-- Asset Allocation Pie Chart -->
     {% if portfolio_value > 0 %}
     <div class="row mb-4">
@@ -88,9 +94,8 @@
             </div>
         </div>
     </div>
-    {% endif %}
-
-    <!-- Holdings Table -->
+{% endif %}
+<!-- Holdings Table -->
     <h4 class="mb-3">Your Portfolio Holdings</h4>
 
     {% if holdings %}
