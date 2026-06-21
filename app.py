@@ -99,51 +99,50 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
 @app.route('/analyse_stock', methods=['POST'])
 @login_required
 def analyse_stock():
+    # ticker from form
     ticker = request.form.get('ticker', '').strip().upper()
+    # optional next URL to return to (should be a relative path on your site)
+    next_url = request.form.get('next', '').strip()
+
     if not ticker:
         flash('Please enter a stock ticker symbol.', 'error')
+        # fall back to dashboard
         return redirect(url_for('dashboard'))
 
-    # read raw desired_change and parse to float if provided
-    desired_raw = request.form.get('desired_change', '').strip()
-    desired_change = None
-    if desired_raw != '':
-        try:
-            # user enters a percentage like 10 means 10%
-            # decisionTree expects desired_change as a number; keep same units
-            desired_change = float(desired_raw)
-        except ValueError:
-            flash('Invalid target percentage. Please enter a number.', 'error')
-            return redirect(url_for('dashboard'))
-
+    # run decision tree (we ignore details for now)
     try:
-        # pass desired_change into decisionTree
-        action, details = decisionTree(ticker, current_user.id, desired_change)
+        action, details = decisionTree(ticker, current_user.id)
 
-        # store only the action string into session keyed by ticker
+        # store only the action under analysis_results in session
         analysis_results = session.get('analysis_results', {})
         analysis_results[ticker] = str(action)
         session['analysis_results'] = analysis_results
         session.modified = True
 
-        # optional: store a minimal DB record (store strings, not dicts)
+        # store minimal DB record (store strings / None to avoid sqlite binding errors)
         try:
             conn = sqlite3.connect('database.db')
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO Recommendations (user_id, ticker, recommendation) VALUES (?, ?, ?)",
-                (current_user.id, ticker, str(action), None)
+                (current_user.id, ticker, str(action))
             )
             conn.commit()
             conn.close()
         except Exception:
-            # if DB write fails, don't block the UX
+            # Don't break UX on DB failure
             pass
 
     except Exception as e:
+        # Log and show friendly message
         print(f"Analyse error for {ticker}: {e}")
-        flash(f'Could not analyse stock: {e}', 'error')
+        flash('Could not analyse stock. See server logs for details.', 'error')
 
+    # If a next_url is provided and looks safe (starts with '/'), redirect back to it.
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
+
+    # default fallback
     return redirect(url_for('dashboard'))
 # creates login manager
 @login_manager.user_loader
@@ -861,7 +860,7 @@ def quote_stock():
             error = "Please enter a stock ticker (e.g. AAPL)"
 
     return render_template('quoteStock.html', form=form, stock_data=stock_data, chart_data=chart_data, error=error,
-                               tickerName=tickerName, username=current_user.username)
+                               tickerName=tickerName, username=current_user.username, analysis_results=session.get('analysis_results', {}))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

@@ -928,3 +928,79 @@ hr {
     text-align: center;
     font-weight: 700;
 }
+
+.quote-card {
+    background-color: white;
+    border: 2px solid #1c1b1b;
+    border-radius: 18px;
+    box-shadow: 10px 10px #1c1b1b;
+    padding: 1.25rem;
+    margin: 1.25rem auto;
+    max-width: 900px;
+    width: 92%;
+}
+
+.quote-card .form-group {
+    margin-bottom: 0.8rem;
+}
+.quote-card label {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+    display: block;
+}
+.quote-card .form-control {
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+}
+
+.stock-name-heading {
+    text-align: center;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    color: #1c1b1b;
+    margin: 0.6rem auto 0.8rem auto;
+    max-width: 900px;
+}
+
+/* Card content pieces */
+.card-content { display: flex; flex-direction: column; gap: 0.8rem; }
+.stock-price { font-size: 28px; font-weight: 800; color: #50c78d; margin: 0; }
+.info-row { display:flex; gap: 2rem; flex-wrap:wrap; color:#333; font-weight:600; }
+
+.analyse-button {
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 6px;
+    background-color: white;
+    padding: 0.5rem 1.1rem;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    cursor: pointer;
+}
+.analyse-button:hover { background-color: #50c78d; font-weight: bolder; }
+
+.card-title { margin: 0 0 0.5rem 0; font-weight:800; font-size:1.1rem; }
+.card-body-basic { padding-top: 0.5rem; }
+.buy-form-row { display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap; }
+.buy-form-row .form-group { flex: 1 1 200px; min-width: 150px; }
+.form-group-button { flex: 0 1 160px; }
+
+.buy-button {
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 6px;
+    background-color: #6ce1a6;
+    padding: 0.55rem 1rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+.buy-button:hover { background-color: #50c78d; }
+
+/* Error card */
+.error-message { color: #891d24; font-weight:800; text-align:center; }
+
