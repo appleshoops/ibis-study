@@ -604,10 +604,184 @@ hr {
 }
 
 .portfolio-shares-input {
-    width: 80%;
+    width: 75%;
     min-height: 36px;
     margin: 0;
     text-align: center;
+}
+
+.analysis-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    background: white;
+    margin: 0.5rem 0;
+    font-weight: 800;
+    font-size: 0.95rem;
+    text-align: center;
+    width: 30%;
+    align-self: center;
+}
+
+.analysis-badge.positive {
+    background: #eaf9ef;
+    color: #0a6e3a;
+}
+
+.analysis-badge.negative {
+    background: #ffecec;
+    color: #8b1f1f;
+}
+
+.portfolio-analyse-form {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    min-height: auto;
+    width: 100%;
+}
+
+.portfolio-analyse-button {
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 5px;
+    background-color: white;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    width: 100%;
+    min-height: 36px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 100ms ease;
+    margin-top: -50px;
+    margin-right: 0;
+
+}
+
+.portfolio-analyse-button:hover {
+    background-color: #50c78d;
+    font-weight: bolder;
+}
+
+.portfolio-analyse-button:active {
+    box-shadow: 0 0 black;
+    transform: translate(2px, 2px);
+}
+
+.portfolio-analyse-inline-form {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 0.65rem;
+    margin: 0.4rem 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    min-height: auto;
+    width: 100%;
+    flex-wrap: nowrap;
+}
+
+.portfolio-analyse-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem; /* makes the label sit closer to the input */
+}
+
+.portfolio-analyse-label {
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1c1b1b;
+    margin: 0;
+    line-height: 1;
+}
+
+.portfolio-analyse-input {
+    min-height: 36px;
+    padding: 0 0.4rem;
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 5px;
+    font-weight: 700;
+    text-align: center;
+    background: white;
+    margin: 5px 0 0;
+    width: 75%
+}
+
+.portfolio-analyse-button {
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    border-radius: 5px;
+    background-color: white;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    min-height: 36px;
+    padding: 0.2rem 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.portfolio-analyse-button:hover {
+    background-color: #50c78d;
+    font-weight: bolder;
+}
+
+.analysis-result-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0.35rem 0 0.5rem 0;
+}
+
+.analysis-result-label {
+    font-family: 'Manrope', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1c1b1b;
+    line-height: 1;
+}
+
+.analysis-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+    border: 2px solid #1c1b1b;
+    box-shadow: 5px 5px #1c1b1b;
+    background: white;
+    font-weight: 800;
+    font-size: 0.95rem;
+    text-align: center;
+    width: fit-content;
+    margin: -15px -3px -3px;
+    align-self: start;
+}
+
+.analysis-badge.buy {
+    background: #eaf9ef;
+    color: #0a6e3a;
+}
+
+.analysis-badge.sell {
+    background: #ffecec;
+    color: #8b1f1f;
+}
+
+.analysis-badge.hold {
+    background: #f4f4f4;
+    color: #333;
+}
+
+@media (max-width: 420px) {
+    .portfolio-analyze-inline-form {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
 }
 
 @keyframes flashPop {

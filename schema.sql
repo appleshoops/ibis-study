@@ -82,7 +82,6 @@ CREATE TABLE IF NOT EXISTS Recommendations (
     user_id INTEGER NOT NULL,
     ticker TEXT NOT NULL,
     recommendation TEXT NOT NULL,  -- Buy, Sell or Hold
-    details TEXT,               -- Why the model chose the reccomendation
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 )

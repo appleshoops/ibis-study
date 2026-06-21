@@ -96,37 +96,53 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
         return False, f"{warning} {suggestions}".strip()
     return True, "Strong password"
 
-
-@app.route('analyse_stock', methods=['POST'])
+@app.route('/analyse_stock', methods=['POST'])
 @login_required
 def analyse_stock():
     ticker = request.form.get('ticker', '').strip().upper()
-
     if not ticker:
         flash('Please enter a stock ticker symbol.', 'error')
         return redirect(url_for('dashboard'))
 
+    # read raw desired_change and parse to float if provided
+    desired_raw = request.form.get('desired_change', '').strip()
+    desired_change = None
+    if desired_raw != '':
+        try:
+            # user enters a percentage like 10 means 10%
+            # decisionTree expects desired_change as a number; keep same units
+            desired_change = float(desired_raw)
+        except ValueError:
+            flash('Invalid target percentage. Please enter a number.', 'error')
+            return redirect(url_for('dashboard'))
+
     try:
-        action, details = decisionTree(ticker, current_user.id) # runs the ML algorithm on the ticker and user id to get a recommendation
+        # pass desired_change into decisionTree
+        action, details = decisionTree(ticker, current_user.id, desired_change)
 
-        # saves the recommendation
-        analysis_result = session.get('analysis_result', {})
-        analysis_result[ticker] = str(action)
-        session['analysis_result'] = analysis_result
-        session.modified = True # Ensure session is saved after modification
+        # store only the action string into session keyed by ticker
+        analysis_results = session.get('analysis_results', {})
+        analysis_results[ticker] = str(action)
+        session['analysis_results'] = analysis_results
+        session.modified = True
 
-        conn = sqlite3.connect('database.db')
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO Recommendations (user_id, ticker, recommendation, details) VALUES (?, ?, ?, ?)",
-            (current_user.id, ticker, action, details)
-        )
-        conn.commit()
-        conn.close()
+        # optional: store a minimal DB record (store strings, not dicts)
+        try:
+            conn = sqlite3.connect('database.db')
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO Recommendations (user_id, ticker, recommendation) VALUES (?, ?, ?)",
+                (current_user.id, ticker, str(action), None)
+            )
+            conn.commit()
+            conn.close()
+        except Exception:
+            # if DB write fails, don't block the UX
+            pass
 
     except Exception as e:
-        print(e)
-        flash('Could not analyse stock', 'error')
+        print(f"Analyse error for {ticker}: {e}")
+        flash(f'Could not analyse stock: {e}', 'error')
 
     return redirect(url_for('dashboard'))
 # creates login manager
