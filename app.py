@@ -461,11 +461,16 @@ def dashboard():
             fig = px.pie(
                 names=tickers_for_pie,
                 values=weights_for_pie,
-                title="Asset Allocation by Market Value",
-                hole=0.1
+                title="Asset Allocation by Market Value"
             )
             fig.update_traces(textposition='inside', textinfo='percent+label')
-            fig.update_layout(height=450, showlegend=True)
+            fig.update_layout(showlegend=False,
+                              title_text=None,
+                              margin=dict(l=0, r=10, t=30, b=0),
+                              paper_bgcolor='rgba(0,0,0,0)',
+                              plot_bgcolor='rgba(0,0,0,0)',
+                              height=250,
+                              width=250)
             allocation_chart = pio.to_html(fig, full_html=False, include_plotlyjs='cdn')
 
         # Top Gainer and Top Loser

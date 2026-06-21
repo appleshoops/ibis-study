@@ -290,3 +290,5 @@ def decisionTree(ticker_symbol, user_id=None, desired_change=None):
         details['primary_reason'] = None
 
     return action, details
+
+print(decisionTree("NAB.AX", 6))
