@@ -215,7 +215,7 @@ button:active {
 }
 
 button[type="submit"] {
-    width: 100%;
+    width: 20%;
 }
 
 button[type="submit"].IHATETHIS {
@@ -604,7 +604,7 @@ hr {
 }
 
 .portfolio-shares-input {
-    width: 90px;
+    width: 80%;
     min-height: 36px;
     margin: 0;
     text-align: center;

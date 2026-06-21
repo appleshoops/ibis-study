@@ -73,7 +73,7 @@
                 <h5>{{ holding.ticker }}</h5>
                 <span class="portfolio-shares">{{ holding.shares }} shares</span>
             </div>
-
+        
             <div class="portfolio-card-body">
                 <div class="portfolio-row">
                     <span class="label">Avg Buy Price</span>
@@ -122,6 +122,21 @@
                            required>
                     <button type="submit">
                         Sell
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ url_for('buy_stock') }}" class="portfolio-sell-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="ticker" value="{{ holding.ticker }}">
+                    <input type="number"
+                           name="shares"
+                           min="1"
+                           max="{{ holding.shares }}"
+                           value="1"
+                           class="portfolio-shares-input"
+                           required>
+                    <button type="submit">
+                        Buy
                     </button>
                 </form>
 

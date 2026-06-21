@@ -19,7 +19,7 @@ from contextlib import contextmanager
 import os
 from dotenv import load_dotenv
 from datetime import datetime
-
+from algorithm import decisionTree
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
 if not app.config['SECRET_KEY']:
@@ -97,6 +97,38 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
     return True, "Strong password"
 
 
+@app.route('analyse_stock', methods=['POST'])
+@login_required
+def analyse_stock():
+    ticker = request.form.get('ticker', '').strip().upper()
+
+    if not ticker:
+        flash('Please enter a stock ticker symbol.', 'error')
+        return redirect(url_for('dashboard'))
+
+    try:
+        action, details = decisionTree(ticker, current_user.id) # runs the ML algorithm on the ticker and user id to get a recommendation
+
+        # saves the recommendation
+        analysis_result = session.get('analysis_result', {})
+        analysis_result[ticker] = str(action)
+        session['analysis_result'] = analysis_result
+        session.modified = True # Ensure session is saved after modification
+
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO Recommendations (user_id, ticker, recommendation, details) VALUES (?, ?, ?, ?)",
+            (current_user.id, ticker, action, details)
+        )
+        conn.commit()
+        conn.close()
+
+    except Exception as e:
+        print(e)
+        flash('Could not analyse stock', 'error')
+
+    return redirect(url_for('dashboard'))
 # creates login manager
 @login_manager.user_loader
 def load_user(user_id):
@@ -489,7 +521,8 @@ def dashboard():
                                holdings=enhanced_holdings,
                                top_gainer=top_gainer,
                                top_loser=top_loser,
-                               allocation_chart=allocation_chart)
+                               allocation_chart=allocation_chart,
+                               analysis_results=session.get('analysis_results', {}))
 
     except Exception as e:
         print(f"Dashboard error: {e}")
@@ -507,7 +540,8 @@ def dashboard():
             holdings=[],
             top_gainer=None,
             top_loser=None,
-            allocation_chart=""
+            allocation_chart="",
+            analysis_results=session.get('analysis_results', {})
         )
 
 
