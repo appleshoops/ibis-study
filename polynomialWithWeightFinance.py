@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import joblib
+import os
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
@@ -33,10 +34,10 @@ def trainModel(ticker_symbol):
     ridge_alpha = 1.0
 
     # setting the weights of each feature, can be adjusted later
-    weight_Volume = 1.0
-    weight_52_week_pos = 1.0
-    weight_etf = 1.0
-    weight_daily_returns = 1.0
+    weight_Volume = 0.172
+    weight_52_week_pos = 0.264
+    weight_etf = 0.466
+    weight_daily_returns = 0.097
 
     # apply weights
     X_train_w = X_train.copy()
@@ -52,12 +53,15 @@ def trainModel(ticker_symbol):
     X_test_w['Top Sector ETF Close'] = X_test_w['Top Sector ETF Close'] * weight_etf
     X_test_w['Daily Returns'] = X_test_w['Daily Returns'] * weight_daily_returns
 
-    # polynomial features
-    print(f"🔹 Step 4: Polynomial Features (degree={degree})...")
+    scaler = StandardScaler()
+
+    X_train_scaled = scaler.fit_transform(X_train_w)
+    X_test_scaled = scaler.transform(X_test_w)
+
     poly = PolynomialFeatures(degree=degree, include_bias=False)
 
-    X_train_poly = poly.fit_transform(X_train_w)
-    X_test_poly = poly.transform(X_test_w)
+    X_train_poly = poly.fit_transform(X_train_scaled)
+    X_test_poly = poly.transform(X_test_scaled)
 
     print(f"Polynomial features shape: {X_train_poly.shape}")
 
@@ -74,10 +78,12 @@ def trainModel(ticker_symbol):
     print("✅ Model training complete.")
 
     # feature importance
-    feature_names = poly.get_feature_names_out()
+    feature_names = poly.get_feature_names_out(X.columns)
+    coef_values = np.abs(model.coef_).ravel()
+
     coef_df = pd.DataFrame({
         'Feature': feature_names,
-        'Abs Coefficient': np.abs(model.coef_)
+        'Abs Coefficient': coef_values
     })
 
     volume_terms = [f for f in feature_names if 'Volume' in f]
@@ -102,8 +108,17 @@ def trainModel(ticker_symbol):
     print(f"\nTest R²:    {r2_score(y_test, y_test_pred):.4f}")
     print(f"Test MAE:   {mean_absolute_error(y_test, y_test_pred):.4f}")
 
-    joblib.dump(poly, f'/poly/{ticker_symbol}_poly_transformer_grades.pkl')
-    joblib.dump(model, f'/model/{ticker_symbol}_polynomial_regression_model_grades.pkl')
+    os.makedirs("poly", exist_ok=True)
+    os.makedirs("models", exist_ok=True)
+
+    poly_path = os.path.join("poly", f"{ticker_symbol}_poly_transformer_grades.pkl")
+    model_path = os.path.join("models", f"{ticker_symbol}_polynomial_regression_model_grades.pkl")
+
+    joblib.dump(poly, poly_path)
+    joblib.dump(model, model_path)
+
+    print(f"✅ Saved polynomial transformer to {poly_path}")
+    print(f"✅ Saved model to {model_path}")
 
     # Plot actual vs predicted stock close price
     y_test_flat = y_test.values.ravel()
@@ -126,4 +141,4 @@ def trainModel(ticker_symbol):
     plt.title(f"{ticker_symbol}: Actual vs Predicted Close Price (degree={degree})")
     plt.grid(True)
     plt.show()
-trainModel("NVDA")
+trainModel("BP")

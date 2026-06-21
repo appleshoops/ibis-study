@@ -90,7 +90,10 @@ def stockDataCollection(ticker_symbol):
         print(f"Error fetching {ticker}: {e}")
         return None, None, f"Failed to fetch data for {ticker}. Please try again."
 
-stockDataCollection("MCD")
+weight_Volume = 0.369
+weight_52_week_pos = 0.567
+weight_etf = 1.0
+weight_daily_returns = 0.208
+
 # calcHighLowDiff(yf.Ticker("NVDA"))
 # etfComparison("CBA.AX")
-
