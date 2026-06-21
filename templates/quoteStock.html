@@ -1,122 +1,65 @@
 {% extends 'base.html' %}   
 {% block title %}Quote Stock – Ibis Finance{% endblock %}
 
-{% block extra_head %}
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-{% endblock %}
-
 {% block content %}
+
+    <!-- Search Card -->
+    <div class="quote-card">
         <form method="POST" action="{{ url_for('quote_stock') }}">
             {{ form.csrf_token }}
             <h2>Quote Stock</h2>
-            <p>Ticker Name <br>
-                {{ form.tickerName() }}</p>
-            <p>{{ form.submit() }}</p>
+            <div>
+                <label>Ticker Name</label>
+                {{ form.tickerName() }}
+            </div>
+            {{ form.submit() }}
         </form>
-
+    </div>
 
     {% if stock_data %}
-        <div class="card shadow mb-4">
-            <div class="card-header bg-success text-white text-center">
-                <h4>Stock Information</h4>
-            </div>
-            <div class="card-body">
-                <h3>{{ stock_data.ticker }} - {{ stock_data.name }}</h3>
+        <!-- Stock Name Heading -->
+        <h2 class="stock-name-heading">{{ stock_data.ticker }} - {{ stock_data.name }}</h2>
 
-                <h2 class="text-success mb-3">
-                    ${{ stock_data.current_price }}
-                    <small class="text-muted fs-5">({{ stock_data.currency }})</small>
-                </h2>
+        <!-- Stock Info Card -->
+        <div class="quote-card">
+            <div class="card-content">
+                <h3 class="stock-price">${{ stock_data.current_price }} <small>{{ stock_data.currency }}</small></h3>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Previous Close:</strong> ${{ stock_data.previous_close }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <p><strong>Last Updated:</strong> {{ stock_data.last_updated }}</p>
-                    </div>
+                <div class="info-row">
+                    <span><strong>Previous Close:</strong> ${{ stock_data.previous_close }}</span>
                 </div>
-
-                {% if stock_data.summary %}
-                    <hr>
-                    <p><strong>About the company:</strong><br>
-                    {{ stock_data.summary[:650] }}...</p>
-                {% endif %}
+                <div class="info-row">
+                    <span><strong>Last Updated:</strong> {{ stock_data.last_updated }}</span>
+                </div>
             </div>
         </div>
-    {% endif %}
 
+        <!-- Buy Stock Card -->
+        <div class="quote-card">
+            <h3>Buy Shares</h3>
+            <form method="POST" action="{{ url_for('buy_stock') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="ticker" value="{{ stock_data.ticker }}">
 
-    {% if chart_data %}
-        <div class="card shadow">
-            <div class="card-header bg-success text-white">
-                <h5>Price History (Last 3 Months)</h5>
-            </div>
-            <div class="card-body">
-                <div id="priceChart" style="height: 450px;"></div>
-            </div>
-        </div>
-    {% endif %}
-
-    <!-- Buy Stock Section -->
-    {% if stock_data %}
-        <div class="card shadow mb-4">
-            <div class="card-header bg-success text-white">
-                <h5>Buy Shares</h5>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('buy_stock') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="ticker" value="{{ stock_data.ticker }}">
-
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-4">
-                            <label class="form-label">Number of Shares</label>
-                            <input type="number"
-                                    name="shares"
-                                    class="form-control"
-                                    min="1"
-                                    value="10"
-                                    required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Price per Share</label>
-                            <input type="text"
-                                    class="form-control"
-                                    value="${{ stock_data.current_price }}"
-                                    readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-primary btn-lg w-100">
-                                Buy Shares
-                            </button>
-                        </div>
+                <div class="buy-form-row">
+                    <div class="form-group">
+                        <label>Number of Shares</label>
+                        <input type="number" name="shares" min="1" value="10" required>
                     </div>
-                </form>
-            </div>
+
+                    <div class="form-group">
+                        <label>Price per Share</label>
+                        <input type="text" value="${{ stock_data.current_price }}" readonly>
+                    </div>
+
+                    <button type="submit" class="buy-button">Buy Shares</button>
+                </div>
+            </form>
         </div>
     {% endif %}
 
-    {% if chart_data %}
-    <script>
-        var trace = {
-            x: {{ chart_data.dates | tojson }},
-            y: {{ chart_data.close | tojson }},
-            mode: 'lines',
-            name: 'Close Price',
-            line: { color: '#28a745', width: 3 }
-        };
-
-        var layout = {
-            title: '{{ stock_data.ticker }} Price History',
-            xaxis: { title: 'Date' },
-            yaxis: { title: 'Price ({{ stock_data.currency }})' },
-            hovermode: 'x unified',
-            template: 'plotly_white'
-        };
-
-        var data = [trace];
-        Plotly.newPlot('priceChart', data, layout);
-    </script>
+    {% if error %}
+        <div class="error-message">{{ error }}</div>
     {% endif %}
+
 {% endblock %}
