@@ -60,82 +60,84 @@
             </div>
         </div>
     </div>
-{% endif %}
+
 <!-- Holdings Table -->
+    <!-- Holdings Cards -->
     <h4 class="mb-3">Your Portfolio Holdings</h4>
 
     {% if holdings %}
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Ticker</th>
-                    <th class="text-end">Shares Owned</th>
-                    <th class="text-end">Avg Buy Price</th>
-                    <th class="text-end">Current Price</th>
-                    <th class="text-end">Market Value</th>
-                    <th class="text-end">Unrealized P&L</th>
-                    <th class="text-end">% Return</th>
-                    <th class="text-center">Sell Shares</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for holding in holdings %}
-                <tr>
-                    <td><strong>{{ holding.ticker }}</strong></td>
-                    <td class="text-end">{{ holding.shares }}</td>
-                    <td class="text-end">${{ holding.avg_buy_price }}</td>
-                    <td class="text-end">
+    <div class="holdings-grid">
+        {% for holding in holdings %}
+        <div class="portfolio-card">
+            <div class="portfolio-card-header">
+                <h5>{{ holding.ticker }}</h5>
+                <span class="portfolio-shares">{{ holding.shares }} shares</span>
+            </div>
+
+            <div class="portfolio-card-body">
+                <div class="portfolio-row">
+                    <span class="label">Avg Buy Price</span>
+                    <span>${{ holding.avg_buy_price }}</span>
+                </div>
+
+                <div class="portfolio-row">
+                    <span class="label">Current Price</span>
+                    <span>
                         {% if holding.current_price %}${{ holding.current_price }}{% else %}N/A{% endif %}
-                    </td>
-                    <td class="text-end">
+                    </span>
+                </div>
+
+                <div class="portfolio-row">
+                    <span class="label">Market Value</span>
+                    <span>
                         {% if holding.market_value %}${{ holding.market_value }}{% else %}—{% endif %}
-                    </td>
-                    <td class="text-end {% if holding.unrealized_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    </span>
+                </div>
+
+                <div class="portfolio-row">
+                    <span class="label">Unrealized P&L</span>
+                    <span class="{% if holding.unrealized_pnl is not none and holding.unrealized_pnl >= 0 %}positive{% elif holding.unrealized_pnl is not none %}negative{% endif %}">
                         {% if holding.unrealized_pnl is not none %}${{ holding.unrealized_pnl }}{% else %}—{% endif %}
-                    </td>
-                    <td class="text-end {% if holding.pnl_percent >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    </span>
+                </div>
+
+                <div class="portfolio-row">
+                    <span class="label">% Return</span>
+                    <span class="{% if holding.pnl_percent is not none and holding.pnl_percent >= 0 %}positive{% elif holding.pnl_percent is not none %}negative{% endif %}">
                         {% if holding.pnl_percent is not none %}{{ holding.pnl_percent }}%{% else %}—{% endif %}
-                    </td>
+                    </span>
+                </div>
+            </div>
 
-                    <!-- Sell Options -->
-                    <td>
-                        <div class="d-flex gap-2 justify-content-center">
-                            <!-- Partial Sell Form -->
-                            <form method="POST" action="{{ url_for('sell_stock') }}" class="d-inline-flex align-items-center gap-1">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="ticker" value="{{ holding.ticker }}">
-                                <input type="number"
-                                       name="shares"
-                                       min="1"
-                                       max="{{ holding.shares }}"
-                                       value="1"
-                                       class="form-control form-control-sm"
-                                       style="width: 85px;"
-                                       required>
-                                <button type="submit"
-                                        class="btn btn-sm btn-outline-danger">
-                                    Sell
-                                </button>
-                            </form>
+            <div class="portfolio-sell-section">
+                <form method="POST" action="{{ url_for('sell_stock') }}" class="portfolio-sell-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="ticker" value="{{ holding.ticker }}">
+                    <input type="number"
+                           name="shares"
+                           min="1"
+                           max="{{ holding.shares }}"
+                           value="1"
+                           class="portfolio-shares-input"
+                           required>
+                    <button type="submit">
+                        Sell
+                    </button>
+                </form>
 
-                            <!-- Sell All Button -->
-                            <form method="POST" action="{{ url_for('sell_stock') }}" class="d-inline">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="ticker" value="{{ holding.ticker }}">
-                                <input type="hidden" name="shares" value="{{ holding.shares }}">
-                                <button type="submit"
-                                        class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Sell ALL {{ holding.shares }} shares of {{ holding.ticker }}? This action cannot be undone.')">
-                                    Sell All
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                <form method="POST" action="{{ url_for('sell_stock') }}" class="portfolio-sell-all-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="ticker" value="{{ holding.ticker }}">
+                    <input type="hidden" name="shares" value="{{ holding.shares }}">
+                    <button type="submit"
+                            class="IHATETHIS"
+                            onclick="return confirm('Sell ALL {{ holding.shares }} shares of {{ holding.ticker }}? This action cannot be undone.')">
+                        Sell All
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
     </div>
     {% else %}
         <div class="alert alert-info">
@@ -144,7 +146,6 @@
         </div>
     {% endif %}
 
-</div>
 {% endblock %}
 
 {% block extra_scripts %}
