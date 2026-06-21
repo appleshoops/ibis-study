@@ -928,3 +928,57 @@ hr {
     text-align: center;
     font-weight: 700;
 }
+
+/* Transactions card wrapper to centre the card on the page */
+.transactions-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 60vh;
+  padding: 2rem 1rem;
+}
+
+
+.transactions-card {
+  max-width: 1200px;
+}
+
+
+.transactions-card .table {
+  width: 100%;
+  table-layout: auto; /* let columns size themselves */
+}
+
+.transactions-card .table th,
+.transactions-card .table td {
+  padding: 0.9rem 1.25rem;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.transactions-card .table th:nth-child(1),
+.transactions-card .table td:nth-child(1) { min-width: 160px; } /* Date & Time */
+.transactions-card .table th:nth-child(2),
+.transactions-card .table td:nth-child(2) { min-width: 110px; } /* Ticker */
+.transactions-card .table th:nth-child(3),
+.transactions-card .table td:nth-child(3) { min-width: 90px; }  /* Type */
+.transactions-card .table th:nth-child(4),
+.transactions-card .table td:nth-child(4) { min-width: 100px; } /* Shares */
+.transactions-card .table th:nth-child(5),
+.transactions-card .table td:nth-child(5) { min-width: 130px; } /* Price per Share */
+.transactions-card .table th:nth-child(6),
+.transactions-card .table td:nth-child(6) { min-width: 130px; } /* Total Amount */
+
+/* Ensure transactions card uses the white card visual */
+body .transactions-page .transactions-card {
+  background-color: #ffffff !important;
+  border: 2px solid #1c1b1b !important;
+  border-radius: 30px !important;
+  box-shadow: 10px 10px #1c1b1b !important;
+  padding: 1.25em !important;
+  margin: 1rem auto !important;
+  max-width: 1200px !important;
+  width: 95% !important;
+  overflow: auto !important;
+  color: #1c1b1b !important;
+}

@@ -18,12 +18,11 @@
 
             {% else %}
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                {# <a href="{{ url_for('flashcardSetSelect') }}">Flashcards</a>
-                <a href="{{ url_for('quizSelect') }}">Quizzes</a>#}
-                <a href="{{ url_for('view_log') }}">Logs</a>
-                <a href="{{ url_for('logout') }}">Logout</a>
                 <a href="{{ url_for('quote_stock') }}">Quote Stock</a>
                 <a href="{{ url_for('transactions') }}">Transactions</a>
+                <a href="{{ url_for('recommendations') }}">Recommendations</a>
+                <a href="{{ url_for('view_log') }}">Logs</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
             {% endif %}
         </nav>
     </header>

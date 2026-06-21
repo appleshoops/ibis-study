@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Recommendation History - Smart Study{% endblock %}
+{% block heading %}Recommendation History{% endblock %}
+
+{% block content %}
+<div class="transactions-page">
+    <div class="transactions-card">
+        <h3 class="stock-name-heading">Your Recommendation History</h3>
+
+        {% if recommendations %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Ticker</th>
+                        <th>Recommendation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in recommendations %}
+                    <tr>
+                        <td>{{ rec.timestamp }}</td>
+                        <td><strong>{{ rec.ticker }}</strong></td>
+                        <td>
+                            <span class="badge {% if rec.recommendation == 'BUY' %}bg-success{% elif rec.recommendation == 'SELL' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ rec.recommendation }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center py-5">
+            <h5>No recommendations yet</h5>
+            <p>Your stock analysis recommendations will appear here.</p>
+            <a href="{{ url_for('quote_stock') }}" class="btn btn-primary">Analyse a Stock</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

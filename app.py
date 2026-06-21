@@ -862,6 +862,33 @@ def quote_stock():
     return render_template('quoteStock.html', form=form, stock_data=stock_data, chart_data=chart_data, error=error,
                                tickerName=tickerName, username=current_user.username, analysis_results=session.get('analysis_results', {}))
 
+@app.route('/recommendations')
+@login_required
+def recommendations():
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                           SELECT t.id,
+                                  t.ticker,
+                                  t.recommendation,
+                                  t.timestamp
+                           FROM Recommendations t
+                           WHERE t.user_id = ?
+                           ORDER BY t.timestamp DESC
+                           """, (current_user.id,))
+
+            recommendations = cursor.fetchall()
+
+        return render_template('recommendations.html',
+                               recommendations=recommendations,
+                               username=current_user.username)
+
+    except Exception as e:
+        print(f"Transactions error: {e}")
+        flash('Error loading transaction history.', 'error')
+        return redirect(url_for('dashboard'))
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
