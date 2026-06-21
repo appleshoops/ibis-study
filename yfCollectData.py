@@ -16,9 +16,12 @@ def calcDailyReturns(ticker_symbol):
         return daily_returns
     except Exception as e: # error handling
         print(f"Error fetching {ticker}: {e}")
-        return None, None, f"Failed to fetch data for {ticker}. Please try again."
-
-def calcHighLowDiff(stock):
+        return None
+def calcHighLowDiff(ticker_symbol):
+    if not ticker_symbol or len(ticker_symbol.strip()) < 1:  # if ticker name is too short
+        return None
+    ticker = ticker_symbol.upper().strip()
+    stock = yf.Ticker(ticker)  # establishes ticker
     hist = stock.history(period="6y", interval="1d") # sets period to 6 years since we need a year more of data to compare earlier dates
     # finds highest and lowest price in the past year
     hist["52_week_high"] = hist["High"].rolling(window=252, min_periods=1).max()
@@ -33,7 +36,7 @@ def calcHighLowDiff(stock):
     return hist_5y
 def etfComparison(ticker_symbol):
     if not ticker_symbol or len(ticker_symbol.strip()) < 1:  # if ticker name is too short
-        return None, None, "Please enter a valid ticker symbol"
+        return None
     ticker = ticker_symbol.upper().strip()
 
     try:
@@ -55,18 +58,30 @@ def etfComparison(ticker_symbol):
 
     except Exception as e: # error handling
         print(f"Error fetching {ticker}: {e}")
-        return None, None, f"Failed to fetch data for {ticker}. Please try again."
+        return None
+def volumeCollect(ticker_symbol):
+    if not ticker_symbol or len(ticker_symbol.strip()) < 1:  # if ticker name is too short
+        return None
+    ticker = ticker_symbol.upper().strip()
+
+    try:
+        stock = yf.Ticker(ticker)
+        volume = stock.info["volume"]
+        return volume
+    except Exception as e:
+        print(e)
+        return None
 
 def stockDataCollection(ticker_symbol):
     if not ticker_symbol or len(ticker_symbol.strip()) < 1:  # if ticker name is too short
-        return None, None, "Please enter a valid ticker symbol"
+        return None
     ticker = ticker_symbol.upper().strip()
 
     try:
         stock = yf.Ticker(ticker) # establishes ticker
 
         hist = stock.history(period="5y", interval="1d") # retrieves ticker history
-        high_low_features = calcHighLowDiff(stock) # grab the relative position within 52 week high/low datafram from previous function
+        high_low_features = calcHighLowDiff(ticker_symbol) # grab the relative position within 52 week high/low datafram from previous function
         etf_hist = etfComparison(ticker_symbol) # gets the closing price of the relevant ETF
         daily_returns = calcDailyReturns(ticker_symbol) # get the percentage change from the previous day's price
 
@@ -88,12 +103,9 @@ def stockDataCollection(ticker_symbol):
 
     except Exception as e: # error handling
         print(f"Error fetching {ticker}: {e}")
-        return None, None, f"Failed to fetch data for {ticker}. Please try again."
+        return None
 
-weight_Volume = 0.369
-weight_52_week_pos = 0.567
-weight_etf = 1.0
-weight_daily_returns = 0.208
 
+volumeCollect("NVDA")
 # calcHighLowDiff(yf.Ticker("NVDA"))
 # etfComparison("CBA.AX")

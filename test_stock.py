@@ -8,8 +8,18 @@ pd.set_option('display.max_rows', None)
 
 ticker = "AAPL"
 
-url = f'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers={ticker}&apikey=8T0TGH76R6PPITIC&limit=3000'
-r = requests.get(url)
-data = r.json()
+stock = yf.Ticker(ticker)  # establishes ticker
+sector_key = stock.info.get('sector')  # finds sector of ticker
+if sector_key:
+    sector_key = sector_key.lower().replace(" ", "-")  # sectors need to be lower case
+sector_data = yf.Sector(sector_key)
 
-print(data)
+# fetches the top ETFs in the sector and gets the ticker symbol of the first one
+sector_etfs = sector_data.top_etfs
+etf_symbol = next(iter(sector_etfs))
+
+# gets another ticker for the etf
+etf = yf.Ticker(etf_symbol)
+etf_hist = etf.history(period="5y", interval="1d")  # get etf history
+
+print(etf_hist)

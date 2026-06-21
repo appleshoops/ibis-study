@@ -29,7 +29,7 @@ def trainModel(ticker_symbol):
     )
 
     # setting the parameters of the training
-    degree = 4 # highest power of the polynomial
+    degree = 2 # highest power of the polynomial
     use_ridge = True # sets it to be a polynomial instead of linear regression
     ridge_alpha = 1.0
 
@@ -110,15 +110,19 @@ def trainModel(ticker_symbol):
 
     os.makedirs("poly", exist_ok=True)
     os.makedirs("models", exist_ok=True)
+    os.makedirs("scaler", exist_ok=True)
 
     poly_path = os.path.join("poly", f"{ticker_symbol}_poly_transformer_grades.pkl")
     model_path = os.path.join("models", f"{ticker_symbol}_polynomial_regression_model_grades.pkl")
+    scaler_path = os.path.join("scaler", f"{ticker_symbol}_scaler_grades.pkl")
 
     joblib.dump(poly, poly_path)
     joblib.dump(model, model_path)
+    joblib.dump(scaler, scaler_path)
 
     print(f"✅ Saved polynomial transformer to {poly_path}")
     print(f"✅ Saved model to {model_path}")
+    print(f"✅ Saved scaler to {scaler_path}")
 
     # Plot actual vs predicted stock close price
     y_test_flat = y_test.values.ravel()
@@ -141,4 +145,3 @@ def trainModel(ticker_symbol):
     plt.title(f"{ticker_symbol}: Actual vs Predicted Close Price (degree={degree})")
     plt.grid(True)
     plt.show()
-trainModel("BP")
