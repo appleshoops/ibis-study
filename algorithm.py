@@ -100,13 +100,17 @@ def stockProfit(ticker_symbol):
         return None
 
 def getNewsSentiment(ticker_symbol):
+    """
+    Minimal: try AlphaVantage NEWS_SENTIMENT and return the numeric overall_sentiment_score.
+    If the request fails, or feed is empty / missing, return None (so callers ignore sentiment).
+    """
     url = f'https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers={ticker_symbol}&apikey=7VGY7S29TCWQEFB5&limit=1'
     try:
         resp = requests.get(url, timeout=10)
         resp.raise_for_status()
         newsJSON = resp.json()
     except Exception as e:
-        # network error, rate limit, bad response — ignore sentiment
+        # network error, rate limit, bad response, etc. — ignore sentiment
         print(f"AlphaVantage request failed/ignored: {e}")
         return None
 
@@ -285,8 +289,6 @@ def decisionTree(ticker_symbol, user_id=None, desired_change=None):
     else:
         details['primary_reason'] = None
 
-    print(f"Decision for {ticker_symbol}: {action} (Buy score: {buy_score}, Sell score: {sell_score})")
-
     return action, details
 
-decisionTree("ABCD", 6, desired_change=10.0)
+print(stockProfit("BHP.AX"))
