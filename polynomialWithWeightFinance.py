@@ -35,7 +35,7 @@ def trainModel(ticker_symbol):
 
     # setting the weights of each feature, can be adjusted later
     weight_Volume = 0.172
-    weight_52_week_pos = 0.264
+    weight_52_week_pos = 0.2646
     weight_etf = 0.466
     weight_daily_returns = 0.097
 
